@@ -5,41 +5,55 @@ const { authenticate } = require('../middleware/auth');
 
 const router = express.Router();
 
+// Helper to generate 8-char room code
+const generateRoomCode = () => {
+    return Math.random().toString(36).substring(2, 10).toUpperCase();
+};
+
 // Create a room
 router.post('/create', authenticate, async (req, res) => {
     try {
         const { type } = req.body;
-        const roomId = uuidv4();
+        const roomCode = generateRoomCode();
+        console.log(`Creating room: ${roomCode} for user: ${req.user.id}`);
         const room = new Room({
-            roomId,
-            createdBy: req.user.id,
+            roomCode,
+            creatorId: req.user.id,
             type,
-            participants: []
+            participants: [req.user.id]
         });
         await room.save();
+        console.log(`Room created successfully: ${roomCode}`);
         res.status(201).json(room);
     } catch (err) {
+        console.error(`Error creating room: ${err.message}`);
         res.status(500).json({ error: err.message });
     }
 });
 
 // Get room details
-router.get('/:id', authenticate, async (req, res) => {
+router.get('/:code', authenticate, async (req, res) => {
     try {
-        const room = await Room.findOne({ roomId: req.params.id });
-        if (!room) return res.status(404).json({ message: 'Room not found' });
+        console.log(`Looking up room with code: ${req.params.code}`);
+        const room = await Room.findOne({ roomCode: req.params.code });
+        if (!room) {
+            console.log(`Room NOT found: ${req.params.code}`);
+            return res.status(404).json({ message: 'Room not found' });
+        }
+        console.log(`Room found: ${req.params.code}`);
         res.json(room);
     } catch (err) {
+        console.error(`Error looking up room: ${err.message}`);
         res.status(500).json({ error: err.message });
     }
 });
 
 // Join a room (metadata update)
-router.post('/:id/join', authenticate, async (req, res) => {
+router.post('/:code/join', authenticate, async (req, res) => {
     try {
-        const room = await Room.findOne({ roomId: req.params.id });
+        const room = await Room.findOne({ roomCode: req.params.code });
         if (!room) return res.status(404).json({ message: 'Room not found' });
-        if (room.status === 'ended') return res.status(400).json({ message: 'Room has ended' });
+        if (!room.active) return res.status(400).json({ message: 'Room is inactive' });
 
         if (!room.participants.includes(req.user.id)) {
             room.participants.push(req.user.id);
@@ -53,13 +67,13 @@ router.post('/:id/join', authenticate, async (req, res) => {
 });
 
 // End a room
-router.post('/:id/end', authenticate, async (req, res) => {
+router.post('/:code/end', authenticate, async (req, res) => {
     try {
-        const room = await Room.findOne({ roomId: req.params.id });
+        const room = await Room.findOne({ roomCode: req.params.code });
         if (!room) return res.status(404).json({ message: 'Room not found' });
-        if (room.createdBy !== req.user.id) return res.status(403).json({ message: 'Forbidden' });
+        if (room.creatorId !== req.user.id) return res.status(403).json({ message: 'Forbidden' });
 
-        room.status = 'ended';
+        room.active = false;
         await room.save();
         res.json({ message: 'Room ended' });
     } catch (err) {

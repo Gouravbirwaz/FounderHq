@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { io } from 'socket.io-client';
 import { Mic, MicOff, Video, VideoOff, PhoneOff, Users } from 'lucide-react';
 
-const HUDDLE_SERVICE_URL = 'http://localhost:5001';
+const HUDDLE_SERVICE_URL = process.env.NEXT_PUBLIC_HUDDLE_SERVICE_URL || 'http://localhost:5001';
 
 export default function HuddlePanel() {
     const [activeTab, setActiveTab] = useState<'rooms' | 'active'>('rooms');

@@ -263,11 +263,11 @@ export default function MarketPage() {
                     })}
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                <div className="space-y-5">
                     {/* Main area — Stock Grid */}
-                    <div className="lg:col-span-2 space-y-5">
+                    <div className="space-y-5">
                         {/* Stock cards grid */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                             <AnimatePresence mode="popLayout">
                                 {isSearching && displaySymbols.length === 0 && (
                                     <motion.div
@@ -423,8 +423,8 @@ export default function MarketPage() {
                                             <Sparkline
                                                 data={selectedPrice.history}
                                                 color={selectedPrice.direction === "up" ? "#34d399" : "#fb7185"}
-                                                width={600}
-                                                height={80}
+                                                width={1000}
+                                                height={100}
                                             />
                                         </div>
 
@@ -459,163 +459,6 @@ export default function MarketPage() {
                         </AnimatePresence>
                     </div>
 
-                    {/* Right Column */}
-                    <div className="space-y-5">
-                        {/* Sector Summary */}
-                        <GlassCard style={{ padding: 20 }}>
-                            <div className="flex items-center gap-3 mb-4">
-                                <div className="w-9 h-9 rounded-lg border flex items-center justify-center" style={{
-                                    background: `${sectorDef.color}12`,
-                                    borderColor: `${sectorDef.color}20`,
-                                    color: sectorDef.color,
-                                }}>
-                                    <Layers size={16} strokeWidth={1.8} />
-                                </div>
-                                <div>
-                                    <h3 className="text-sm font-semibold text-[var(--text-primary)]">{activeSector} Sector</h3>
-                                    <p className="text-[10px] text-[var(--text-tertiary)] font-normal mt-0.5">Live Overview</p>
-                                </div>
-                            </div>
-
-                            <div className="space-y-3">
-                                {sectorSymbols.map(sym => {
-                                    const pd = prices[sym.symbol];
-                                    const dir = pd?.direction ?? "flat";
-                                    const dirColor = dir === "up" ? "var(--accent-emerald)" : dir === "down" ? "var(--accent-rose)" : "var(--text-tertiary)";
-                                    return (
-                                        <button
-                                            key={sym.symbol}
-                                            onClick={() => setSelectedSymbol(sym.symbol)}
-                                            className="w-full flex items-center justify-between py-2.5 px-3 rounded-xl transition-all duration-150 cursor-pointer"
-                                            style={{
-                                                background: selectedSymbol === sym.symbol ? "rgba(var(--text-primary-rgb), 0.04)" : "transparent",
-                                                border: selectedSymbol === sym.symbol ? "1px solid var(--border-subtle)" : "1px solid transparent",
-                                            }}
-                                        >
-                                            <div className="flex items-center gap-2.5">
-                                                <div className="w-1.5 h-1.5 rounded-full" style={{ background: dirColor, boxShadow: `0 0 6px ${dirColor}60` }} />
-                                                <span className="text-xs font-medium text-[var(--text-secondary)]">{sym.displayName}</span>
-                                            </div>
-                                            <div className="flex items-center gap-3">
-                                                {pd ? (
-                                                    <>
-                                                        <span className="text-xs font-mono text-[var(--text-tertiary)]">₹{pd.price.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</span>
-                                                        <span style={{ fontSize: 10, fontWeight: 600, color: dirColor }}>
-                                                            {formatPct(pd.changePct)}
-                                                        </span>
-                                                    </>
-                                                ) : (
-                                                    <div className="w-16 h-3 rounded bg-black/5 dark:bg-white/5 animate-pulse" />
-                                                )}
-                                            </div>
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        </GlassCard>
-
-                        {/* Smart Alerts */}
-                        <GlassCard glow="violet" style={{ padding: 24 }}>
-                            <div className="space-y-5">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-9 h-9 rounded-lg bg-violet-500/15 border border-violet-500/20 flex items-center justify-center text-violet-400">
-                                        <Bell size={16} strokeWidth={1.8} />
-                                    </div>
-                                    <div>
-                                        <h3 className="text-sm font-semibold text-[var(--text-primary)]">Smart Alerts</h3>
-                                        <p className="text-[10px] text-[var(--text-tertiary)] font-normal mt-0.5">
-                                            {selectedDef ? selectedDef.displayName : "Select a stock"}
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-5 gap-2">
-                                    <div className="col-span-2 space-y-1.5">
-                                        <label className="text-[10px] font-medium text-[var(--text-tertiary)] ml-1">Condition</label>
-                                        <select
-                                            value={alertDir}
-                                            suppressHydrationWarning
-                                            onChange={(e) => setAlertDir(e.target.value)}
-                                            className="w-full px-3 py-2.5 rounded-lg text-xs bg-black/5 dark:bg-white/[0.04] border border-[var(--border-subtle)] text-[var(--text-primary)] focus:outline-none focus:border-violet-500/40 transition-colors"
-                                        >
-                                            <option value="above" className="bg-[var(--surface-1)]">Above</option>
-                                            <option value="below" className="bg-[var(--surface-1)]">Below</option>
-                                        </select>
-                                    </div>
-                                    <div className="col-span-3 space-y-1.5">
-                                        <label className="text-[10px] font-medium text-[var(--text-tertiary)] ml-1">Price Trigger</label>
-                                        <div className="relative">
-                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)] opacity-30 text-xs">₹</span>
-                                            <input
-                                                type="number"
-                                                suppressHydrationWarning
-                                                placeholder="0.00"
-                                                value={alertThreshold}
-                                                onChange={(e) => setAlertThreshold(e.target.value)}
-                                                className="w-full pl-7 pr-3 py-2.5 rounded-lg text-sm bg-black/5 dark:bg-white/[0.04] border border-[var(--border-subtle)] text-[var(--text-primary)] placeholder-[var(--text-tertiary)] focus:outline-none focus:border-violet-500/40 transition-colors font-mono"
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <NeonButton size="sm" className="w-full mt-1 h-10" onClick={createAlert}>
-                                    <div className="flex items-center gap-2">
-                                        <Plus className="w-3.5 h-3.5" strokeWidth={2.5} />
-                                        <span>Deploy Monitor</span>
-                                    </div>
-                                </NeonButton>
-                            </div>
-                        </GlassCard>
-
-                        {/* Market insights */}
-                        <GlassCard style={{ padding: 20 }}>
-                            <div className="flex items-center gap-3 mb-4">
-                                <div className="w-9 h-9 rounded-lg bg-emerald-500/10 border border-emerald-500/15 flex items-center justify-center text-emerald-400">
-                                    <BarChart3 size={16} strokeWidth={1.8} />
-                                </div>
-                                <div>
-                                    <h3 className="text-sm font-semibold text-[var(--text-primary)]">Market Pulse</h3>
-                                    <p className="text-[10px] text-[var(--text-tertiary)] font-normal mt-0.5">Sector Summary</p>
-                                </div>
-                            </div>
-                            <div className="space-y-3">
-                                {(() => {
-                                    const ups = sectorSymbols.filter(s => prices[s.symbol]?.direction === "up").length;
-                                    const downs = sectorSymbols.filter(s => prices[s.symbol]?.direction === "down").length;
-                                    const total = sectorSymbols.filter(s => prices[s.symbol]).length;
-                                    return (
-                                        <>
-                                            <div className="flex items-center justify-between">
-                                                <span className="text-xs text-[var(--text-tertiary)]">Gainers</span>
-                                                <div className="flex items-center gap-2">
-                                                    <TrendingUp size={12} className="text-emerald-400" />
-                                                    <span className="text-sm font-semibold text-emerald-400">{ups}</span>
-                                                </div>
-                                            </div>
-                                            <div className="flex items-center justify-between">
-                                                <span className="text-xs text-[var(--text-tertiary)]">Losers</span>
-                                                <div className="flex items-center gap-2">
-                                                    <TrendingDown size={12} className="text-rose-400" />
-                                                    <span className="text-sm font-semibold text-rose-400">{downs}</span>
-                                                </div>
-                                            </div>
-                                            {total > 0 && (
-                                                <div className="mt-2 h-1.5 rounded-full bg-black/5 dark:bg-white/5 overflow-hidden">
-                                                    <div
-                                                        className="h-full rounded-full transition-all duration-500"
-                                                        style={{
-                                                            width: `${(ups / total) * 100}%`,
-                                                            background: "linear-gradient(90deg, #34d399, #22d3ee)",
-                                                        }}
-                                                    />
-                                                </div>
-                                            )}
-                                        </>
-                                    );
-                                })()}
-                            </div>
-                        </GlassCard>
-                    </div>
                 </div>
             </div>
         </DashboardLayout>

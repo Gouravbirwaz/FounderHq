@@ -55,3 +55,36 @@ async def get_me(user: User = Depends(get_current_user)):
         "vetting_badge": user.vetting_badge,
         "avatar_url": user.avatar_url,
     }
+
+
+@router.get("/search")
+async def search_users(q: str, current_user: User = Depends(get_current_user)):
+    if not q:
+        return []
+    
+    # Simple search by name
+    users = await User.find(
+        {"name": {"$regex": q, "$options": "i"}},
+        User.id != current_user.id
+    ).limit(5).to_list()
+    
+    return [{
+        "id": str(u.id),
+        "name": u.name,
+        "role": u.role,
+        "avatar_url": u.avatar_url
+    } for u in users]
+
+
+@router.get("/{user_id}")
+async def get_user_by_id(user_id: str, current_user: User = Depends(get_current_user)):
+    user = await User.get(user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    return {
+        "id": str(user.id),
+        "name": user.name,
+        "role": user.role,
+        "avatar_url": user.avatar_url,
+    }

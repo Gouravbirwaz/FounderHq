@@ -3,13 +3,12 @@ import * as React from "react";
 import { Sidebar } from "./Sidebar";
 import { TopBar } from "./TopBar";
 import { MarketTicker } from "@/components/market/MarketTicker";
-import HuddlePanel from "@/components/huddle/HuddlePanel";
 import { useMarketData } from "@/hooks/useMarketData";
 import { useTheme } from "next-themes";
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
     const [sidebarOpen, setSidebarOpen] = React.useState(false);
-    const [huddleOpen, setHuddleOpen] = React.useState(false);
+    const [isCollapsed, setIsCollapsed] = React.useState(false);
     const { stocks } = useMarketData();
     const { resolvedTheme } = useTheme();
     const [mounted, setMounted] = React.useState(false);
@@ -31,13 +30,12 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                 {/* ... existing atmosphere divs ... */}
             </div>
 
-            {/* Sidebar */}
             <div style={{ position: "relative", zIndex: 10 }}>
                 <Sidebar
                     open={sidebarOpen}
                     onCloseAction={() => setSidebarOpen(false)}
-                    onHuddleToggle={() => setHuddleOpen(!huddleOpen)}
-                    huddleActive={huddleOpen}
+                    isCollapsed={isCollapsed}
+                    onToggleCollapse={() => setIsCollapsed(!isCollapsed)}
                 />
             </div>
 
@@ -50,9 +48,6 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                         {children}
                     </main>
                 </div>
-
-                {/* Huddle Panel */}
-                {huddleOpen && <HuddlePanel />}
             </div>
         </div>
     );

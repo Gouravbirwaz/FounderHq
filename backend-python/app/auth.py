@@ -15,13 +15,20 @@ bearer_scheme = HTTPBearer()
 
 
 def hash_password(password: str) -> str:
-    # bcrypt has a hard 72-byte limit — truncate safely
-    return pwd_context.hash(password.encode("utf-8")[:72].decode("utf-8", errors="ignore"))
+    # bcrypt has a hard 72-byte limit — truncate conservatively
+    # Use 70 bytes to avoid any boundary issues with passlib
+    safe_password = password.encode("utf-8")[:70].decode("utf-8", errors="ignore")
+    return pwd_context.hash(safe_password)
 
 
 def verify_password(plain: str, hashed: str) -> bool:
-    plain_truncated = plain.encode("utf-8")[:72].decode("utf-8", errors="ignore")
-    return pwd_context.verify(plain_truncated, hashed)
+    try:
+        # Use 70 bytes to avoid any boundary issues
+        safe_plain = plain.encode("utf-8")[:70].decode("utf-8", errors="ignore")
+        return pwd_context.verify(safe_plain, hashed)
+    except Exception as e:
+        print(f"Password verification error: {e}")
+        return False
 
 
 def create_access_token(data: dict) -> str:
