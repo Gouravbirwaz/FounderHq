@@ -4,6 +4,8 @@ import { GlassCard } from "@/components/ui/GlassCard";
 import { NeonButton } from "@/components/ui/NeonButton";
 import { motion } from "framer-motion";
 import { Lock, ShieldCheck, DollarSign, FileText, ArrowRight, Landmark } from "lucide-react";
+import { useTheme } from "next-themes";
+import * as React from "react";
 
 const VAULT_ITEMS = [
     { title: "Cap Table", desc: "Track equity distribution, vesting schedules, and dilution scenarios in real-time.", icon: FileText, accent: "#8b5cf6", locked: false },
@@ -12,19 +14,20 @@ const VAULT_ITEMS = [
 ];
 
 export default function FundingPage() {
+    const { resolvedTheme } = useTheme();
+    const [mounted, setMounted] = React.useState(false);
+
+    React.useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    if (!mounted) return null;
+    const isLight = resolvedTheme === "light";
     return (
         <DashboardLayout>
             <div className="max-w-5xl mx-auto space-y-8">
 
                 {/* Header */}
-                <div>
-                    <div className="flex items-center gap-2 mb-2">
-                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" style={{ boxShadow: "0 0 8px #34d399" }} />
-                        <span className="text-[10px] font-medium uppercase tracking-widest text-emerald-400/70">Secure Module</span>
-                    </div>
-                    <h1 className="text-3xl font-bold tracking-tight text-white">Funding Vault</h1>
-                    <p className="text-sm text-white/35 mt-2 max-w-xl font-normal">Enterprise-grade equity management, investor relations, and compliance tools.</p>
-                </div>
 
                 {/* Vault Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
@@ -34,36 +37,36 @@ export default function FundingPage() {
                                 {/* Card header */}
                                 <div style={{
                                     padding: "24px 24px 20px",
-                                    background: item.locked ? "rgba(255,255,255,0.01)" : `${item.accent}08`,
-                                    borderBottom: `1px solid ${item.locked ? "rgba(255,255,255,0.04)" : item.accent + "15"}`,
+                                    background: item.locked ? (isLight ? "rgba(0,0,0,0.02)" : "rgba(255,255,255,0.01)") : `${item.accent}08`,
+                                    borderBottom: `1px solid ${item.locked ? "var(--border-subtle)" : item.accent + "15"}`,
                                     position: "relative",
                                 }}>
                                     {item.locked && (
                                         <div style={{ position: "absolute", top: 16, right: 16 }}>
-                                            <Lock size={14} className="text-white/15" />
+                                            <Lock size={14} className="text-[var(--text-tertiary)] opacity-30" />
                                         </div>
                                     )}
                                     <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-4"
                                         style={{
-                                            background: item.locked ? "rgba(255,255,255,0.04)" : `${item.accent}15`,
-                                            border: `1px solid ${item.locked ? "rgba(255,255,255,0.06)" : item.accent + "25"}`,
-                                            color: item.locked ? "rgba(255,255,255,0.15)" : item.accent,
+                                            background: item.locked ? "var(--border-subtle)" : `${item.accent}15`,
+                                            border: `1px solid ${item.locked ? "var(--border-default)" : item.accent + "25"}`,
+                                            color: item.locked ? "var(--text-tertiary)" : item.accent,
                                         }}>
                                         <item.icon size={18} />
                                     </div>
-                                    <h3 className={`text-base font-semibold ${item.locked ? "text-white/30" : "text-white"}`}>{item.title}</h3>
+                                    <h3 className={`text-base font-bold tracking-tight ${item.locked ? "text-[var(--text-secondary)] opacity-50" : "text-[var(--text-primary)]"}`}>{item.title}</h3>
                                 </div>
 
                                 {/* Card body */}
                                 <div style={{ padding: "16px 24px 24px" }}>
-                                    <p className={`text-xs leading-relaxed mb-5 ${item.locked ? "text-white/20" : "text-white/40"}`}>{item.desc}</p>
+                                    <p className={`text-xs leading-relaxed mb-6 font-medium ${item.locked ? "text-[var(--text-tertiary)]" : "text-[var(--text-secondary)]"}`}>{item.desc}</p>
                                     {item.locked ? (
                                         <NeonButton size="sm" variant="ghost" className="w-full" disabled>
-                                            <Lock size={12} /> Encrypted
+                                            <Lock size={12} className="mr-2" /> Encrypted Vault
                                         </NeonButton>
                                     ) : (
                                         <NeonButton size="sm" className="w-full">
-                                            <ArrowRight size={12} /> Access Vault
+                                            <ArrowRight size={12} className="mr-2" /> Access Vault
                                         </NeonButton>
                                     )}
                                 </div>
@@ -73,14 +76,18 @@ export default function FundingPage() {
                 </div>
 
                 {/* Bottom CTA */}
-                <GlassCard className="text-center" style={{ padding: "40px 24px" }}>
-                    <div className="w-14 h-14 rounded-2xl mx-auto mb-4 flex items-center justify-center"
-                        style={{ background: "rgba(139,92,246,0.1)", border: "1px solid rgba(139,92,246,0.2)" }}>
-                        <Landmark size={24} className="text-violet-400" />
+                <GlassCard className="text-center" style={{ padding: "48px 32px" }}>
+                    <div className="w-16 h-16 rounded-2xl mx-auto mb-6 flex items-center justify-center"
+                        style={{
+                            background: "rgba(var(--accent-violet-rgb, 139, 92, 246), 0.1)",
+                            border: "1px solid rgba(var(--accent-violet-rgb, 139, 92, 246), 0.2)",
+                            boxShadow: "0 8px 32px rgba(139, 92, 246, 0.1)",
+                        }}>
+                        <Landmark size={28} className="text-[var(--accent-violet)]" />
                     </div>
-                    <h3 className="text-lg font-semibold text-white mb-2">Establishing Secure Uplink</h3>
-                    <p className="text-sm text-white/30 max-w-md mx-auto mb-5">Complete MCA verification to unlock full vault access, including investor data rooms and compliance tools.</p>
-                    <NeonButton>Verify Identity</NeonButton>
+                    <h3 className="text-xl font-bold text-[var(--text-primary)] mb-3 tracking-tight">Establishing Secure Uplink</h3>
+                    <p className="text-sm text-[var(--text-secondary)] max-w-md mx-auto mb-8 font-medium leading-relaxed">Complete MCA verification to unlock full vault access, including investor data rooms and compliance tools.</p>
+                    <NeonButton size="lg">Verify Identity</NeonButton>
                 </GlassCard>
             </div>
         </DashboardLayout>

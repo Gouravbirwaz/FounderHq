@@ -1,10 +1,11 @@
 import os
 from fastapi import FastAPI, WebSocket
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
 from app.database import init_db
-from app.api.v1 import auth, market, poc, jobs, funding
+from app.api.v1 import auth, market, poc, jobs, funding, community
 from app.sockets.market_socket import market_ws_endpoint
 from app.services.news_scraper import scrape_and_store
 
@@ -46,6 +47,11 @@ app.include_router(market.router, prefix="/api/v1")
 app.include_router(poc.router, prefix="/api/v1")
 app.include_router(jobs.router, prefix="/api/v1")
 app.include_router(funding.router, prefix="/api/v1")
+app.include_router(community.router, prefix="/api/v1")
+
+# Static files for uploads
+os.makedirs("uploads", exist_ok=True)
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 
 # WebSocket

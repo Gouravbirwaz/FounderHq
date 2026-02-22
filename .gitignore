@@ -45,3 +45,5 @@ next-env.d.ts
 backend-python/env
 frontend-nextjs/node_modules
 frontend-nextjs/.next
+huddle-feature/server/node_modules
+huddle-feature/server/.env

@@ -58,3 +58,42 @@ class RoundInput(BaseModel):
 class CapTableRequest(BaseModel):
     founder_equity: float = 100.0  # starting %
     rounds: list[RoundInput]
+
+# ─── Community Schemas ────────────────────────────────────────────────────────
+class PostCreate(BaseModel):
+    content: str
+    tags: list[str] = []
+    has_image: bool = False
+    image_alt: Optional[str] = None
+    has_file: bool = False
+    file_name: Optional[str] = None
+
+class PostResponse(BaseModel):
+    id: str
+    author_id: str
+    author_name: str
+    author_role: str
+    content: str
+    timestamp: datetime
+    likes_count: int
+    has_liked: bool = False
+    comments_count: int
+    tags: list[str]
+    has_image: bool
+    image_alt: Optional[str]
+    image_url: Optional[str] = None
+    has_file: bool
+    file_name: Optional[str]
+    file_url: Optional[str] = None
+
+class CommentCreate(BaseModel):
+    content: str
+
+class CommentResponse(BaseModel):
+    id: str
+    post_id: str
+    author_id: str
+    author_name: str
+    author_role: str
+    content: str
+    timestamp: datetime

@@ -9,6 +9,8 @@ import {
     MapPin, ChevronRight, Sparkles, Rocket, BookOpen
 } from "lucide-react";
 import { toast, ToastProvider } from "@/components/ui/Toast";
+import { useTheme } from "next-themes";
+import * as React from "react";
 
 /* ── Data ──────────────────────────────────────── */
 const POCS = [
@@ -37,7 +39,16 @@ const TABS = [
 type TabKey = typeof TABS[number]["key"];
 
 export default function IdeationPage() {
+    const { resolvedTheme } = useTheme();
+    const [mounted, setMounted] = React.useState(false);
     const [tab, setTab] = useState<TabKey>("discovery");
+
+    React.useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    if (!mounted) return null;
+    const isLight = resolvedTheme === "light";
 
     return (
         <DashboardLayout>
@@ -45,22 +56,15 @@ export default function IdeationPage() {
             <div style={{ maxWidth: 1100, margin: "0 auto" }}>
 
                 {/* Header */}
-                <div style={{ marginBottom: 28 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                        <Sparkles size={14} style={{ color: "#fbbf24", opacity: 0.6 }} />
-                        <span style={{ fontSize: 10, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.12em", color: "rgba(251,191,36,0.7)" }}>Innovation</span>
-                    </div>
-                    <h1 style={{ fontSize: 30, fontWeight: 700, letterSpacing: "-0.02em", color: "#fff", margin: 0 }}>Ideation Hub</h1>
-                    <p style={{ fontSize: 14, color: "rgba(255,255,255,0.35)", marginTop: 8, maxWidth: 500, lineHeight: 1.5 }}>Browse proof-of-concepts, explore equity opportunities, and book mentor sessions.</p>
-                </div>
 
                 {/* Tab bar */}
                 <div style={{
                     display: "inline-flex", alignItems: "center", gap: 4,
-                    padding: 4, borderRadius: 14,
-                    background: "rgba(255,255,255,0.03)",
-                    border: "1px solid rgba(255,255,255,0.06)",
-                    marginBottom: 28,
+                    padding: 5, borderRadius: 16,
+                    background: "var(--surface-1)",
+                    border: "1px solid var(--border-subtle)",
+                    marginBottom: 32,
+                    boxShadow: "0 4px 20px rgba(0,0,0,0.03)",
                 }}>
                     {TABS.map(t => {
                         const active = tab === t.key;
@@ -69,14 +73,14 @@ export default function IdeationPage() {
                                 key={t.key}
                                 onClick={() => setTab(t.key)}
                                 style={{
-                                    display: "flex", alignItems: "center", gap: 7,
-                                    padding: "8px 16px", borderRadius: 10,
-                                    fontSize: 13, fontWeight: active ? 600 : 500,
-                                    background: active ? "rgba(139,92,246,0.15)" : "transparent",
-                                    border: active ? "1px solid rgba(139,92,246,0.25)" : "1px solid transparent",
-                                    color: active ? "#fff" : "rgba(255,255,255,0.4)",
+                                    display: "flex", alignItems: "center", gap: 8,
+                                    padding: "9px 18px", borderRadius: 12,
+                                    fontSize: 13, fontWeight: active ? 700 : 500,
+                                    background: active ? "rgba(var(--accent-violet-rgb, 139, 92, 246), 0.12)" : "transparent",
+                                    border: active ? "1px solid rgba(var(--accent-violet-rgb, 139, 92, 246), 0.25)" : "1px solid transparent",
+                                    color: active ? "var(--text-primary)" : "var(--text-tertiary)",
                                     cursor: "pointer",
-                                    transition: "all 0.2s ease",
+                                    transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
                                 }}
                             >
                                 <t.icon size={14} strokeWidth={1.8} />
@@ -99,18 +103,20 @@ export default function IdeationPage() {
                                     transition={{ delay: i * 0.08 }}
                                     style={{
                                         display: "flex", gap: 20,
-                                        padding: 24, borderRadius: 18,
-                                        background: "linear-gradient(160deg, rgba(255,255,255,0.04) 0%, rgba(12,13,20,0.7) 100%)",
-                                        border: "1px solid rgba(255,255,255,0.06)",
-                                        transition: "border-color 0.3s, box-shadow 0.3s",
+                                        padding: 24, borderRadius: 24,
+                                        background: "var(--card-bg)",
+                                        border: "1px solid var(--border-subtle)",
+                                        transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
                                     }}
                                     onMouseEnter={e => {
-                                        (e.currentTarget as HTMLDivElement).style.borderColor = `${poc.accent}35`;
-                                        (e.currentTarget as HTMLDivElement).style.boxShadow = `0 8px 32px rgba(0,0,0,0.3), 0 0 0 1px ${poc.accent}15`;
+                                        (e.currentTarget as HTMLDivElement).style.borderColor = `${poc.accent}50`;
+                                        (e.currentTarget as HTMLDivElement).style.boxShadow = `0 12px 40px rgba(0,0,0,${isLight ? "0.08" : "0.4"}), 0 0 0 1px ${poc.accent}20`;
+                                        (e.currentTarget as HTMLDivElement).style.background = isLight ? `rgba(var(--accent-violet-rgb), 0.02)` : "var(--card-bg)";
                                     }}
                                     onMouseLeave={e => {
-                                        (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(255,255,255,0.06)";
+                                        (e.currentTarget as HTMLDivElement).style.borderColor = "var(--border-subtle)";
                                         (e.currentTarget as HTMLDivElement).style.boxShadow = "none";
+                                        (e.currentTarget as HTMLDivElement).style.background = "var(--card-bg)";
                                     }}
                                 >
                                     {/* Icon */}
@@ -125,26 +131,27 @@ export default function IdeationPage() {
 
                                     {/* Content */}
                                     <div style={{ flex: 1, minWidth: 0 }}>
-                                        <h3 style={{ fontSize: 16, fontWeight: 600, color: "#fff", margin: 0 }}>{poc.title}</h3>
-                                        <p style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", marginTop: 6, lineHeight: 1.5 }}>{poc.desc}</p>
+                                        <h3 style={{ fontSize: 17, fontWeight: 700, color: "var(--text-primary)", margin: 0, letterSpacing: "-0.01em" }}>{poc.title}</h3>
+                                        <p style={{ fontSize: 14, color: "var(--text-secondary)", marginTop: 8, lineHeight: 1.6, fontWeight: 500 }}>{poc.desc}</p>
 
                                         {/* Tags */}
-                                        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 12 }}>
+                                        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 14 }}>
                                             {poc.tags.map(t => (
                                                 <span key={t} style={{
-                                                    padding: "3px 10px", borderRadius: 8,
-                                                    fontSize: 11, fontWeight: 500,
-                                                    background: "rgba(255,255,255,0.04)",
-                                                    border: "1px solid rgba(255,255,255,0.06)",
-                                                    color: "rgba(255,255,255,0.4)",
+                                                    padding: "4px 12px", borderRadius: 10,
+                                                    fontSize: 11, fontWeight: 600,
+                                                    background: "var(--surface-1)",
+                                                    border: "1px solid var(--border-subtle)",
+                                                    color: "var(--text-tertiary)",
+                                                    letterSpacing: "0.02em",
                                                 }}>
                                                     {t}
                                                 </span>
                                             ))}
                                         </div>
 
-                                        <p style={{ fontSize: 12, color: "rgba(255,255,255,0.25)", marginTop: 10 }}>
-                                            <span style={{ fontWeight: 500, color: "rgba(255,255,255,0.4)" }}>Seeking: </span>{poc.seeking}
+                                        <p style={{ fontSize: 13, color: "var(--text-tertiary)", marginTop: 14, fontWeight: 500 }}>
+                                            <span style={{ fontWeight: 700, color: "var(--text-secondary)" }}>Seeking: </span>{poc.seeking}
                                         </p>
                                     </div>
 
@@ -155,21 +162,23 @@ export default function IdeationPage() {
                                             whileTap={{ scale: 0.92 }}
                                             onClick={() => toast("success", "Upvoted", `You voted for ${poc.title}`)}
                                             style={{
-                                                width: 56, padding: "10px 0",
-                                                display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
-                                                borderRadius: 14,
-                                                background: "rgba(255,255,255,0.03)",
-                                                border: "1px solid rgba(255,255,255,0.06)",
-                                                cursor: "pointer", transition: "all 0.2s",
-                                                color: "rgba(255,255,255,0.4)",
+                                                width: 60, padding: "12px 0",
+                                                display: "flex", flexDirection: "column", alignItems: "center", gap: 5,
+                                                borderRadius: 16,
+                                                background: "var(--surface-1)",
+                                                border: "1px solid var(--border-subtle)",
+                                                cursor: "pointer", transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                                                color: "var(--text-tertiary)",
                                             }}
                                             onMouseEnter={e => {
-                                                (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(139,92,246,0.4)";
-                                                (e.currentTarget as HTMLButtonElement).style.background = "rgba(139,92,246,0.1)";
+                                                (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--accent-violet)";
+                                                (e.currentTarget as HTMLButtonElement).style.background = "rgba(var(--accent-violet-rgb, 139, 92, 246), 0.1)";
+                                                (e.currentTarget as HTMLButtonElement).style.color = "var(--accent-violet)";
                                             }}
                                             onMouseLeave={e => {
-                                                (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,255,255,0.06)";
-                                                (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.03)";
+                                                (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--border-subtle)";
+                                                (e.currentTarget as HTMLButtonElement).style.background = "var(--surface-1)";
+                                                (e.currentTarget as HTMLButtonElement).style.color = "var(--text-tertiary)";
                                             }}
                                         >
                                             <ArrowUp size={16} />
@@ -192,13 +201,21 @@ export default function IdeationPage() {
                                     transition={{ delay: i * 0.08 }}
                                     style={{
                                         display: "flex", alignItems: "center", gap: 16,
-                                        padding: "16px 20px", borderRadius: 16,
-                                        background: "linear-gradient(160deg, rgba(255,255,255,0.04) 0%, rgba(12,13,20,0.7) 100%)",
-                                        border: "1px solid rgba(255,255,255,0.06)",
+                                        padding: "16px 20px", borderRadius: 20,
+                                        background: "var(--card-bg)",
+                                        border: "1px solid var(--border-subtle)",
                                         transition: "border-color 0.3s",
                                     }}
-                                    onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.borderColor = `${job.color}30`; }}
-                                    onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(255,255,255,0.06)"; }}
+                                    onMouseEnter={e => {
+                                        (e.currentTarget as HTMLDivElement).style.borderColor = `${job.color}50`;
+                                        (e.currentTarget as HTMLDivElement).style.background = isLight ? `rgba(var(--accent-violet-rgb), 0.02)` : "var(--card-bg)";
+                                        (e.currentTarget as HTMLDivElement).style.boxShadow = `0 8px 32px rgba(0,0,0,${isLight ? "0.05" : "0.3"})`;
+                                    }}
+                                    onMouseLeave={e => {
+                                        (e.currentTarget as HTMLDivElement).style.borderColor = "var(--border-subtle)";
+                                        (e.currentTarget as HTMLDivElement).style.background = "var(--card-bg)";
+                                        (e.currentTarget as HTMLDivElement).style.boxShadow = "none";
+                                    }}
                                 >
                                     {/* Icon */}
                                     <div style={{
@@ -212,26 +229,26 @@ export default function IdeationPage() {
 
                                     {/* Info */}
                                     <div style={{ flex: 1, minWidth: 0 }}>
-                                        <h3 style={{ fontSize: 14, fontWeight: 600, color: "#fff", margin: 0 }}>{job.title}</h3>
-                                        <p style={{ fontSize: 12, color: "rgba(255,255,255,0.35)", marginTop: 3 }}>{job.company}</p>
+                                        <h3 style={{ fontSize: 15, fontWeight: 700, color: "var(--text-primary)", margin: 0, letterSpacing: "-0.01em" }}>{job.title}</h3>
+                                        <p style={{ fontSize: 13, color: "var(--text-tertiary)", marginTop: 4, fontWeight: 500 }}>{job.company}</p>
                                     </div>
 
                                     {/* Meta */}
                                     <div style={{ display: "flex", alignItems: "center", gap: 16, flexShrink: 0 }}>
-                                        <div style={{ display: "flex", alignItems: "center", gap: 5, color: "rgba(255,255,255,0.3)", fontSize: 12 }}>
+                                        <div style={{ display: "flex", alignItems: "center", gap: 5, color: "var(--text-tertiary)", fontSize: 12, fontWeight: 500 }}>
                                             <MapPin size={12} />
                                             <span>{job.location}</span>
                                         </div>
                                         <span style={{
-                                            padding: "4px 10px", borderRadius: 8,
-                                            fontSize: 11, fontWeight: 600,
-                                            background: "rgba(255,255,255,0.04)",
-                                            border: "1px solid rgba(255,255,255,0.06)",
-                                            color: "rgba(255,255,255,0.45)",
+                                            padding: "5px 12px", borderRadius: 10,
+                                            fontSize: 11, fontWeight: 700,
+                                            background: "var(--surface-1)",
+                                            border: "1px solid var(--border-subtle)",
+                                            color: "var(--text-secondary)",
                                         }}>
                                             {job.equity} Equity
                                         </span>
-                                        <span style={{ fontSize: 11, color: "rgba(255,255,255,0.2)" }}>{job.level}</span>
+                                        <span style={{ fontSize: 11, color: "var(--text-tertiary)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>{job.level}</span>
                                     </div>
 
                                     {/* Action */}
@@ -239,12 +256,13 @@ export default function IdeationPage() {
                                         whileHover={{ scale: 1.05 }}
                                         whileTap={{ scale: 0.95 }}
                                         style={{
-                                            width: 36, height: 36, borderRadius: 10, flexShrink: 0,
+                                            width: 38, height: 38, borderRadius: 12, flexShrink: 0,
                                             display: "flex", alignItems: "center", justifyContent: "center",
-                                            background: "rgba(255,255,255,0.04)",
-                                            border: "1px solid rgba(255,255,255,0.08)",
-                                            color: "rgba(255,255,255,0.4)",
+                                            background: "var(--surface-1)",
+                                            border: "1px solid var(--border-subtle)",
+                                            color: "var(--text-tertiary)",
                                             cursor: "pointer",
+                                            transition: "all 0.2s ease",
                                         }}
                                     >
                                         <ChevronRight size={16} />
@@ -267,34 +285,43 @@ export default function IdeationPage() {
                                     transition={{ delay: i * 0.08 }}
                                     style={{
                                         display: "flex", flexDirection: "column", alignItems: "center",
-                                        textAlign: "center", gap: 16, padding: 28, borderRadius: 18,
-                                        background: "linear-gradient(160deg, rgba(255,255,255,0.04) 0%, rgba(12,13,20,0.7) 100%)",
-                                        border: "1px solid rgba(255,255,255,0.06)",
-                                        transition: "border-color 0.3s",
+                                        textAlign: "center", gap: 16, padding: 32, borderRadius: 24,
+                                        background: "var(--card-bg)",
+                                        border: "1px solid var(--border-subtle)",
+                                        transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
                                     }}
-                                    onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.borderColor = `${m.color}30`; }}
-                                    onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(255,255,255,0.06)"; }}
+                                    onMouseEnter={e => {
+                                        (e.currentTarget as HTMLDivElement).style.borderColor = `${m.color}60`;
+                                        (e.currentTarget as HTMLDivElement).style.boxShadow = `0 12px 40px rgba(0,0,0,${isLight ? "0.06" : "0.4"}), 0 0 0 1px ${m.color}15`;
+                                        (e.currentTarget as HTMLDivElement).style.transform = "translateY(-4px)";
+                                    }}
+                                    onMouseLeave={e => {
+                                        (e.currentTarget as HTMLDivElement).style.borderColor = "var(--border-subtle)";
+                                        (e.currentTarget as HTMLDivElement).style.boxShadow = "none";
+                                        (e.currentTarget as HTMLDivElement).style.transform = "translateY(0)";
+                                    }}
                                 >
                                     {/* Avatar */}
                                     <div style={{
                                         width: 60, height: 60, borderRadius: 18,
                                         display: "flex", alignItems: "center", justifyContent: "center",
-                                        fontSize: 22, fontWeight: 700, color: "#fff",
+                                        fontSize: 24, fontWeight: 800, color: "#fff",
                                         background: `linear-gradient(135deg, ${m.color}, ${m.color}88)`,
-                                        boxShadow: `0 8px 24px ${m.color}25`,
+                                        boxShadow: `0 8px 24px ${m.color}30`,
+                                        textShadow: "0 2px 4px rgba(0,0,0,0.2)",
                                     }}>
                                         {m.name[0]}
                                     </div>
 
                                     {/* Info */}
                                     <div>
-                                        <h3 style={{ fontSize: 15, fontWeight: 600, color: "#fff", margin: 0 }}>{m.name}</h3>
-                                        <p style={{ fontSize: 12, color: "rgba(255,255,255,0.35)", marginTop: 4 }}>{m.domain}</p>
+                                        <h3 style={{ fontSize: 17, fontWeight: 700, color: "var(--text-primary)", margin: 0, letterSpacing: "-0.01em" }}>{m.name}</h3>
+                                        <p style={{ fontSize: 13, color: "var(--text-tertiary)", marginTop: 6, fontWeight: 500 }}>{m.domain}</p>
                                     </div>
 
                                     {/* Slots */}
-                                    <div style={{ display: "flex", alignItems: "center", gap: 6, color: "rgba(255,255,255,0.25)", fontSize: 11 }}>
-                                        <Users size={12} />
+                                    <div style={{ display: "flex", alignItems: "center", gap: 8, color: "var(--text-tertiary)", fontSize: 12, fontWeight: 600 }}>
+                                        <Users size={14} style={{ opacity: 0.6 }} />
                                         <span>{m.slots} slots this week</span>
                                     </div>
 

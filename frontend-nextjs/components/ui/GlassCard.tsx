@@ -27,20 +27,20 @@ export function GlassCard({ children, glow = "none", className, index = 0, style
         <motion.div
             className={className}
             style={{
-                background: "linear-gradient(160deg, rgba(255,255,255,0.05) 0%, rgba(18,19,28,0.8) 100%)",
+                background: "var(--card-bg)",
                 backdropFilter: "blur(24px) saturate(160%)",
                 WebkitBackdropFilter: "blur(24px) saturate(160%)",
                 border: hasGlow
                     ? `1px solid rgba(${glowRgb}, 0.2)`
-                    : "1px solid rgba(255,255,255,0.07)",
+                    : "1px solid var(--border-subtle)",
                 borderRadius: "var(--radius-xl)",
                 boxShadow: hasGlow
                     ? `0 0 0 1px rgba(${glowRgb}, 0.08), 0 8px 32px rgba(0,0,0,0.4), 0 0 60px rgba(${glowRgb}, 0.06)`
-                    : "0 0 0 1px rgba(255,255,255,0.04), 0 8px 32px rgba(0,0,0,0.4)",
+                    : "0 8px 32px rgba(0,0,0,0.05), 1px 1px 0px rgba(255,255,255,0.1) inset",
                 padding: noPadding ? 0 : "24px",
                 position: "relative",
                 overflow: "hidden",
-                transition: "border-color 0.3s ease, box-shadow 0.3s ease",
+                transition: "all 0.3s ease",
                 ...style,
             }}
             initial={{ opacity: 0, y: 12 }}

@@ -12,6 +12,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useFCSSocket, SECTORS, type PriceData } from "@/hooks/useFCSSocket";
 import { toast } from "@/components/ui/Toast";
+import { useTheme } from "next-themes";
+import * as React from "react";
 
 /* ─── Sector icon map ─── */
 const SECTOR_ICONS: Record<string, React.ReactNode> = {
@@ -59,8 +61,12 @@ function Sparkline({ data, color, width = 80, height = 32 }: { data: number[]; c
 }
 
 /* ─── Price flash animation ─── */
+/* Price flash animation */
 function FlashPrice({ price, direction, currency = "₹" }: { price: number; direction: "up" | "down" | "flat"; currency?: string }) {
+    const { resolvedTheme } = useTheme();
     const [flash, setFlash] = useState(false);
+    const isLight = resolvedTheme === "light";
+
     useEffect(() => {
         setFlash(true);
         const t = setTimeout(() => setFlash(false), 600);
@@ -72,8 +78,8 @@ function FlashPrice({ price, direction, currency = "₹" }: { price: number; dir
             className="font-mono font-bold transition-colors duration-300"
             style={{
                 color: flash
-                    ? direction === "up" ? "#34d399" : direction === "down" ? "#fb7185" : "#fff"
-                    : "rgba(255,255,255,0.9)",
+                    ? direction === "up" ? "#34d399" : direction === "down" ? "#fb7185" : "var(--text-primary)"
+                    : isLight ? "var(--text-primary)" : "rgba(255,255,255,0.9)",
                 textShadow: flash
                     ? direction === "up" ? "0 0 12px rgba(52,211,153,0.4)" : direction === "down" ? "0 0 12px rgba(251,113,133,0.4)" : "none"
                     : "none",
@@ -89,6 +95,8 @@ function FlashPrice({ price, direction, currency = "₹" }: { price: number; dir
 const ALL_SYMBOLS = SECTORS.flatMap(s => s.symbols.map(sym => ({ ...sym, sector: s.label, sectorColor: s.color })));
 
 export default function MarketPage() {
+    const { theme, resolvedTheme } = useTheme();
+    const [mounted, setMounted] = React.useState(false);
     const [activeSector, setActiveSector] = useState("Tech");
     const [selectedSymbol, setSelectedSymbol] = useState<string | null>(null);
     const [alertThreshold, setAlertThreshold] = useState("");
@@ -97,7 +105,14 @@ export default function MarketPage() {
     const [searchFocused, setSearchFocused] = useState(false);
 
     const { prices, connected, status, sectorSymbols } = useFCSSocket(activeSector);
+
+    React.useEffect(() => {
+        setMounted(true);
+    }, []);
+
     const sectorDef = SECTORS.find(s => s.label === activeSector)!;
+
+    const isLight = resolvedTheme === "light";
 
     // Search across ALL sectors
     const isSearching = searchQuery.trim().length > 0;
@@ -155,28 +170,18 @@ export default function MarketPage() {
     // Count stocks with data
     const activeCount = sectorSymbols.filter(s => prices[s.symbol]).length;
 
+    if (!mounted) return null;
+
     return (
         <DashboardLayout>
             <div className="max-w-[1400px] mx-auto space-y-6">
-                {/* Header */}
-                <div className="flex flex-col md:flex-row md:items-end justify-between gap-5">
-                    <div>
-                        <div className="flex items-center gap-2 mb-2">
-                            <div className="w-1.5 h-1.5 rounded-full" style={{ background: sectorDef.color, boxShadow: `0 0 8px ${sectorDef.color}` }} />
-                            <span className="text-[10px] font-medium uppercase tracking-widest" style={{ color: `${sectorDef.color}99` }}>Live Terminal</span>
-                        </div>
-                        <h1 className="text-3xl font-bold tracking-tight text-white">Market Terminal</h1>
-                        <p className="text-sm text-white/35 mt-1.5 max-w-xl font-normal">Real-time stock prices powered by FCS WebSocket — sector intelligence dashboard.</p>
-                    </div>
+                {/* Header Section */}
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-12">
 
-                    <div className="flex items-center gap-3 flex-wrap">
+                    <div className="flex items-center gap-3">
                         {/* Search input */}
-                        <div className="relative" style={{ minWidth: 220 }}>
-                            <Search size={14} style={{
-                                position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)",
-                                color: searchFocused ? sectorDef.color : "rgba(255,255,255,0.2)",
-                                transition: "color 0.2s",
-                            }} />
+                        <div className="relative group" style={{ minWidth: 280 }}>
+                            <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)] group-focus-within:text-emerald-500 transition-colors" />
                             <input
                                 type="text"
                                 placeholder="Search stocks across sectors..."
@@ -184,51 +189,27 @@ export default function MarketPage() {
                                 onChange={e => setSearchQuery(e.target.value)}
                                 onFocus={() => setSearchFocused(true)}
                                 onBlur={() => setSearchFocused(false)}
-                                className="w-full font-mono transition-all duration-200"
-                                style={{
-                                    padding: "9px 34px 9px 34px",
-                                    borderRadius: 12,
-                                    fontSize: 12,
-                                    background: searchFocused ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.03)",
-                                    border: `1px solid ${searchFocused ? `${sectorDef.color}40` : "rgba(255,255,255,0.06)"}`,
-                                    color: "#fff",
-                                    outline: "none",
-                                    boxShadow: searchFocused ? `0 0 16px ${sectorDef.color}10` : "none",
-                                }}
+                                className="pl-11 pr-10 py-3 rounded-2xl bg-[var(--surface-2)] border border-[var(--border-subtle)] focus:border-emerald-500/50 outline-none text-sm transition-all w-full font-medium shadow-sm"
                             />
                             {searchQuery && (
                                 <button
                                     onClick={() => setSearchQuery("")}
-                                    className="cursor-pointer"
-                                    style={{
-                                        position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)",
-                                        background: "none", border: "none", padding: 2,
-                                        color: "rgba(255,255,255,0.3)",
-                                    }}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)] hover:text-rose-400 transition-colors"
                                 >
-                                    <X size={13} />
+                                    <X size={16} />
                                 </button>
                             )}
                         </div>
 
                         {/* Connection status */}
-                        <div className="flex items-center gap-2 px-3 py-2 rounded-xl border" style={{
-                            background: connected ? "rgba(52,211,153,0.06)" : "rgba(251,113,133,0.06)",
-                            borderColor: connected ? "rgba(52,211,153,0.15)" : "rgba(251,113,133,0.15)",
-                        }}>
-                            {connected ? <Wifi size={13} className="text-emerald-400" /> : <WifiOff size={13} className="text-rose-400" />}
-                            <span className="text-[10px] font-semibold uppercase tracking-wider" style={{
-                                color: connected ? "#34d399" : "#fb7185"
-                            }}>
-                                {status === "connecting" ? "Connecting" : connected ? "Live" : "Offline"}
+                        <div className={`flex items-center gap-2 px-4 py-3 rounded-2xl border transition-all shadow-sm ${connected ? "bg-emerald-500/5 border-emerald-500/10" : "bg-rose-500/5 border-rose-500/10"
+                            }`}>
+                            {connected ? <Wifi size={16} className="text-emerald-400" /> : <WifiOff size={16} className="text-rose-400" />}
+                            <span className={`text-[10px] font-black uppercase tracking-widest ${connected ? "text-emerald-400" : "text-rose-400"
+                                }`}>
+                                {status === "connecting" ? "Sync" : connected ? "Live" : "Offline"}
                             </span>
-                            {connected && (
-                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" style={{ boxShadow: "0 0 6px #34d399" }} />
-                            )}
                         </div>
-                        {activeCount > 0 && (
-                            <span className="text-[10px] text-white/25 font-medium">{activeCount}/{sectorSymbols.length} feeds</span>
-                        )}
                     </div>
                 </div>
 
@@ -258,9 +239,9 @@ export default function MarketPage() {
                                     borderRadius: 14,
                                     fontSize: 13,
                                     fontWeight: active ? 600 : 500,
-                                    background: active && !isSearching ? `${sector.color}18` : "rgba(255,255,255,0.03)",
-                                    border: `1px solid ${active && !isSearching ? `${sector.color}40` : "rgba(255,255,255,0.06)"}`,
-                                    color: active && !isSearching ? sector.color : "rgba(255,255,255,0.4)",
+                                    background: active && !isSearching ? `${sector.color}18` : "var(--surface-1)",
+                                    border: `1px solid ${active && !isSearching ? `${sector.color}40` : "var(--border-subtle)"}`,
+                                    color: active && !isSearching ? sector.color : "var(--text-tertiary)",
                                     boxShadow: active && !isSearching ? `0 0 20px ${sector.color}10` : "none",
                                     opacity: isSearching ? 0.5 : 1,
                                 }}
@@ -294,9 +275,9 @@ export default function MarketPage() {
                                         animate={{ opacity: 1 }}
                                         className="col-span-2 flex flex-col items-center justify-center py-16 text-center"
                                     >
-                                        <Search size={32} style={{ color: "rgba(255,255,255,0.08)", marginBottom: 12 }} />
-                                        <p className="text-sm text-white/25 font-medium">No stocks found for &ldquo;{searchQuery}&rdquo;</p>
-                                        <p className="text-xs text-white/15 mt-1">Try searching by name, symbol, or sector</p>
+                                        <Search size={32} className="text-[var(--text-tertiary)] opacity-20 mb-3" />
+                                        <p className="text-sm text-[var(--text-tertiary)] font-medium">No stocks found for &ldquo;{searchQuery}&rdquo;</p>
+                                        <p className="text-xs text-[var(--text-tertiary)] opacity-60 mt-1">Try searching by name, symbol, or sector</p>
                                     </motion.div>
                                 )}
                                 {displaySymbols.map((sym, i) => {
@@ -305,7 +286,7 @@ export default function MarketPage() {
                                     const pd = prices[sym.symbol];
                                     const isSelected = selectedSymbol === sym.symbol;
                                     const dir = pd?.direction ?? "flat";
-                                    const dirColor = dir === "up" ? "#34d399" : dir === "down" ? "#fb7185" : "rgba(255,255,255,0.3)";
+                                    const dirColor = dir === "up" ? "var(--accent-emerald)" : dir === "down" ? "var(--accent-rose)" : "var(--text-tertiary)";
 
                                     return (
                                         <motion.div
@@ -322,26 +303,26 @@ export default function MarketPage() {
                                                     padding: "20px",
                                                     borderRadius: 18,
                                                     background: isSelected
-                                                        ? `linear-gradient(135deg, ${cardColor}10, rgba(12,13,20,0.8))`
-                                                        : "rgba(255,255,255,0.02)",
-                                                    border: `1px solid ${isSelected ? `${cardColor}35` : "rgba(255,255,255,0.05)"}`,
+                                                        ? isLight ? `${cardColor}08` : `linear-gradient(135deg, ${cardColor}10, rgba(12,13,20,0.8))`
+                                                        : "var(--card-bg)",
+                                                    border: `1px solid ${isSelected ? `${cardColor}35` : "var(--border-subtle)"}`,
                                                     boxShadow: isSelected ? `0 4px 24px ${cardColor}10, inset 0 1px 0 ${cardColor}10` : "none",
                                                 }}
                                             >
                                                 <div className="flex items-start justify-between mb-3">
                                                     <div>
                                                         <div className="flex items-center gap-2">
-                                                            <h3 className="text-sm font-semibold text-white">{sym.displayName}</h3>
+                                                            <h3 className="text-sm font-semibold text-[var(--text-primary)]">{sym.displayName}</h3>
                                                             <span style={{
                                                                 fontSize: 8, fontWeight: 700, padding: "2px 5px", borderRadius: 4,
-                                                                background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.25)",
+                                                                background: "var(--border-subtle)", color: "var(--text-tertiary)",
                                                                 letterSpacing: "0.05em",
                                                             }}>
                                                                 {sym.exchange}
                                                             </span>
                                                         </div>
                                                         <div className="flex items-center gap-1.5 mt-0.5">
-                                                            <p className="text-[10px] text-white/20 font-mono">{sym.symbol}</p>
+                                                            <p className="text-[10px] text-[var(--text-tertiary)] font-mono">{sym.symbol}</p>
                                                             {isSearching && symSector && (
                                                                 <span style={{
                                                                     fontSize: 8, fontWeight: 700, padding: "1px 5px", borderRadius: 4,
@@ -375,7 +356,7 @@ export default function MarketPage() {
                                                             </div>
                                                         ) : (
                                                             <div className="flex items-center gap-2">
-                                                                <div className="w-20 h-5 rounded bg-white/5 animate-pulse" />
+                                                                <div className="w-20 h-5 rounded bg-black/5 dark:bg-white/5 animate-pulse" />
                                                             </div>
                                                         )}
                                                     </div>
@@ -402,7 +383,7 @@ export default function MarketPage() {
                                         {/* Header */}
                                         <div style={{
                                             padding: "20px 24px",
-                                            borderBottom: "1px solid rgba(255,255,255,0.04)",
+                                            borderBottom: "1px solid var(--border-subtle)",
                                             display: "flex", alignItems: "center", justifyContent: "space-between",
                                         }}>
                                             <div className="flex items-center gap-4">
@@ -415,8 +396,8 @@ export default function MarketPage() {
                                                 </div>
                                                 <div>
                                                     <div className="flex items-center gap-2">
-                                                        <p className="text-sm font-semibold text-white">{selectedDef.displayName}</p>
-                                                        <span className="text-[10px] text-white/20 font-mono">{selectedDef.symbol}</span>
+                                                        <p className="text-sm font-semibold text-[var(--text-primary)]">{selectedDef.displayName}</p>
+                                                        <span className="text-[10px] text-[var(--text-tertiary)] font-mono">{selectedDef.symbol}</span>
                                                         <span className={cn(
                                                             "w-1.5 h-1.5 rounded-full",
                                                             connected ? "bg-emerald-400 animate-pulse" : "bg-rose-400"
@@ -450,10 +431,10 @@ export default function MarketPage() {
                                         {/* OHLCV data strip */}
                                         <div style={{
                                             padding: "14px 24px",
-                                            background: "rgba(0,0,0,0.2)",
-                                            borderTop: "1px solid rgba(255,255,255,0.04)",
+                                            background: "rgba(0,0,0,0.03)",
+                                            borderTop: "1px solid var(--border-subtle)",
                                             display: "flex", flexWrap: "wrap", gap: 24,
-                                        }}>
+                                        }} className="dark:bg-black/20">
                                             {[
                                                 { label: "Open", value: selectedPrice.open },
                                                 { label: "High", value: selectedPrice.high },
@@ -462,8 +443,8 @@ export default function MarketPage() {
                                                 { label: "Volume", value: selectedPrice.volume, isVol: true },
                                             ].map(item => (
                                                 <div key={item.label} className="flex-1 min-w-[80px]">
-                                                    <p className="text-[10px] font-medium text-white/20 mb-1">{item.label}</p>
-                                                    <p className="text-sm font-semibold font-mono text-white/70">
+                                                    <p className="text-[10px] font-medium text-[var(--text-tertiary)] mb-1">{item.label}</p>
+                                                    <p className="text-sm font-semibold font-mono text-[var(--text-secondary)]">
                                                         {item.isVol
                                                             ? (item.value > 1e6 ? `${(item.value / 1e6).toFixed(2)}M` : item.value.toLocaleString("en-IN"))
                                                             : `₹${item.value.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
@@ -491,8 +472,8 @@ export default function MarketPage() {
                                     <Layers size={16} strokeWidth={1.8} />
                                 </div>
                                 <div>
-                                    <h3 className="text-sm font-semibold text-white">{activeSector} Sector</h3>
-                                    <p className="text-[10px] text-white/25 font-normal mt-0.5">Live Overview</p>
+                                    <h3 className="text-sm font-semibold text-[var(--text-primary)]">{activeSector} Sector</h3>
+                                    <p className="text-[10px] text-[var(--text-tertiary)] font-normal mt-0.5">Live Overview</p>
                                 </div>
                             </div>
 
@@ -500,31 +481,31 @@ export default function MarketPage() {
                                 {sectorSymbols.map(sym => {
                                     const pd = prices[sym.symbol];
                                     const dir = pd?.direction ?? "flat";
-                                    const dirColor = dir === "up" ? "#34d399" : dir === "down" ? "#fb7185" : "rgba(255,255,255,0.2)";
+                                    const dirColor = dir === "up" ? "var(--accent-emerald)" : dir === "down" ? "var(--accent-rose)" : "var(--text-tertiary)";
                                     return (
                                         <button
                                             key={sym.symbol}
                                             onClick={() => setSelectedSymbol(sym.symbol)}
                                             className="w-full flex items-center justify-between py-2.5 px-3 rounded-xl transition-all duration-150 cursor-pointer"
                                             style={{
-                                                background: selectedSymbol === sym.symbol ? "rgba(255,255,255,0.04)" : "transparent",
-                                                border: selectedSymbol === sym.symbol ? "1px solid rgba(255,255,255,0.06)" : "1px solid transparent",
+                                                background: selectedSymbol === sym.symbol ? "rgba(var(--text-primary-rgb), 0.04)" : "transparent",
+                                                border: selectedSymbol === sym.symbol ? "1px solid var(--border-subtle)" : "1px solid transparent",
                                             }}
                                         >
                                             <div className="flex items-center gap-2.5">
                                                 <div className="w-1.5 h-1.5 rounded-full" style={{ background: dirColor, boxShadow: `0 0 6px ${dirColor}60` }} />
-                                                <span className="text-xs font-medium text-white/60">{sym.displayName}</span>
+                                                <span className="text-xs font-medium text-[var(--text-secondary)]">{sym.displayName}</span>
                                             </div>
                                             <div className="flex items-center gap-3">
                                                 {pd ? (
                                                     <>
-                                                        <span className="text-xs font-mono text-white/50">₹{pd.price.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</span>
+                                                        <span className="text-xs font-mono text-[var(--text-tertiary)]">₹{pd.price.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</span>
                                                         <span style={{ fontSize: 10, fontWeight: 600, color: dirColor }}>
                                                             {formatPct(pd.changePct)}
                                                         </span>
                                                     </>
                                                 ) : (
-                                                    <div className="w-16 h-3 rounded bg-white/5 animate-pulse" />
+                                                    <div className="w-16 h-3 rounded bg-black/5 dark:bg-white/5 animate-pulse" />
                                                 )}
                                             </div>
                                         </button>
@@ -541,8 +522,8 @@ export default function MarketPage() {
                                         <Bell size={16} strokeWidth={1.8} />
                                     </div>
                                     <div>
-                                        <h3 className="text-sm font-semibold text-white">Smart Alerts</h3>
-                                        <p className="text-[10px] text-white/25 font-normal mt-0.5">
+                                        <h3 className="text-sm font-semibold text-[var(--text-primary)]">Smart Alerts</h3>
+                                        <p className="text-[10px] text-[var(--text-tertiary)] font-normal mt-0.5">
                                             {selectedDef ? selectedDef.displayName : "Select a stock"}
                                         </p>
                                     </div>
@@ -550,28 +531,28 @@ export default function MarketPage() {
 
                                 <div className="grid grid-cols-5 gap-2">
                                     <div className="col-span-2 space-y-1.5">
-                                        <label className="text-[10px] font-medium text-white/30 ml-1">Condition</label>
+                                        <label className="text-[10px] font-medium text-[var(--text-tertiary)] ml-1">Condition</label>
                                         <select
                                             value={alertDir}
                                             suppressHydrationWarning
                                             onChange={(e) => setAlertDir(e.target.value)}
-                                            className="w-full px-3 py-2.5 rounded-lg text-xs bg-white/[0.04] border border-white/8 text-white focus:outline-none focus:border-violet-500/40 transition-colors"
+                                            className="w-full px-3 py-2.5 rounded-lg text-xs bg-black/5 dark:bg-white/[0.04] border border-[var(--border-subtle)] text-[var(--text-primary)] focus:outline-none focus:border-violet-500/40 transition-colors"
                                         >
-                                            <option value="above" className="bg-[#0c0d14]">Above</option>
-                                            <option value="below" className="bg-[#0c0d14]">Below</option>
+                                            <option value="above" className="bg-[var(--surface-1)]">Above</option>
+                                            <option value="below" className="bg-[var(--surface-1)]">Below</option>
                                         </select>
                                     </div>
                                     <div className="col-span-3 space-y-1.5">
-                                        <label className="text-[10px] font-medium text-white/30 ml-1">Price Trigger</label>
+                                        <label className="text-[10px] font-medium text-[var(--text-tertiary)] ml-1">Price Trigger</label>
                                         <div className="relative">
-                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/20 text-xs">₹</span>
+                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)] opacity-30 text-xs">₹</span>
                                             <input
                                                 type="number"
                                                 suppressHydrationWarning
                                                 placeholder="0.00"
                                                 value={alertThreshold}
                                                 onChange={(e) => setAlertThreshold(e.target.value)}
-                                                className="w-full pl-7 pr-3 py-2.5 rounded-lg text-sm bg-white/[0.04] border border-white/8 text-white placeholder-white/10 focus:outline-none focus:border-violet-500/40 transition-colors font-mono"
+                                                className="w-full pl-7 pr-3 py-2.5 rounded-lg text-sm bg-black/5 dark:bg-white/[0.04] border border-[var(--border-subtle)] text-[var(--text-primary)] placeholder-[var(--text-tertiary)] focus:outline-none focus:border-violet-500/40 transition-colors font-mono"
                                             />
                                         </div>
                                     </div>
@@ -593,8 +574,8 @@ export default function MarketPage() {
                                     <BarChart3 size={16} strokeWidth={1.8} />
                                 </div>
                                 <div>
-                                    <h3 className="text-sm font-semibold text-white">Market Pulse</h3>
-                                    <p className="text-[10px] text-white/25 font-normal mt-0.5">Sector Summary</p>
+                                    <h3 className="text-sm font-semibold text-[var(--text-primary)]">Market Pulse</h3>
+                                    <p className="text-[10px] text-[var(--text-tertiary)] font-normal mt-0.5">Sector Summary</p>
                                 </div>
                             </div>
                             <div className="space-y-3">
@@ -605,21 +586,21 @@ export default function MarketPage() {
                                     return (
                                         <>
                                             <div className="flex items-center justify-between">
-                                                <span className="text-xs text-white/30">Gainers</span>
+                                                <span className="text-xs text-[var(--text-tertiary)]">Gainers</span>
                                                 <div className="flex items-center gap-2">
                                                     <TrendingUp size={12} className="text-emerald-400" />
                                                     <span className="text-sm font-semibold text-emerald-400">{ups}</span>
                                                 </div>
                                             </div>
                                             <div className="flex items-center justify-between">
-                                                <span className="text-xs text-white/30">Losers</span>
+                                                <span className="text-xs text-[var(--text-tertiary)]">Losers</span>
                                                 <div className="flex items-center gap-2">
                                                     <TrendingDown size={12} className="text-rose-400" />
                                                     <span className="text-sm font-semibold text-rose-400">{downs}</span>
                                                 </div>
                                             </div>
                                             {total > 0 && (
-                                                <div className="mt-2 h-1.5 rounded-full bg-white/5 overflow-hidden">
+                                                <div className="mt-2 h-1.5 rounded-full bg-black/5 dark:bg-white/5 overflow-hidden">
                                                     <div
                                                         className="h-full rounded-full transition-all duration-500"
                                                         style={{
