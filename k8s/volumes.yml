@@ -1,0 +1,50 @@
+kind: PersistentVolume
+apiVersion: v1
+
+metadata:
+  name: founderhq_pv
+
+spec:
+  capacity:
+    storage: 30Gi
+  accessModes:
+    - ReadWriteMany
+  storageClassName: ""
+  hostPath:
+    path: /mnt/c/Users/Acer/Desktop/test/databinding
+
+---
+### Claim for the bakend loggging system 
+kind: PersistentVolumeClaim
+apiVersion: v1
+
+metadata:
+  name: backend_pvc
+  namespace: founderhq_ns
+
+spec:
+  resources:
+    requests:
+      storage: 5Gi
+  accessModes:
+    - ReadWriteMany
+  storageClassName: ""
+
+
+---
+### Claim for the huddle and and chat loggging system 
+kind: PersistentVolumeClaim
+apiVersion: v1
+
+metadata:
+  name: huddle_backend_pvc
+  namespace: founderhq_ns
+
+spec:
+  resources:
+    requests:
+      storage: 5Gi
+  accessModes:
+    - ReadWriteMany
+  storageClassName: ""
+

@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
 from app.database import init_db
-from app.api.v1 import auth, market, poc, jobs, funding, community
+from app.api.v1 import auth, market, poc, jobs, funding, community,schedule
 from app.sockets.market_socket import market_ws_endpoint
 from app.services.news_scraper import scrape_and_store
 
@@ -40,6 +40,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request, exc):
+    print(f"Validation error for {request.url}: {exc.errors()}")
+    return JSONResponse(
+        status_code=422,
+        content={"detail": exc.errors(), "body": str(exc.body)},
+    )
+
 # REST Routers
 app.include_router(auth.router, prefix="/api/v1")
 app.include_router(market.router, prefix="/api/v1")
@@ -47,6 +58,7 @@ app.include_router(poc.router, prefix="/api/v1")
 app.include_router(jobs.router, prefix="/api/v1")
 app.include_router(funding.router, prefix="/api/v1")
 app.include_router(community.router, prefix="/api/v1")
+app.include_router(schedule.router, prefix="/api/v1")
 
 # Static files for uploads
 os.makedirs("uploads", exist_ok=True)
@@ -59,6 +71,6 @@ async def websocket_market(websocket: WebSocket):
     await market_ws_endpoint(websocket)
 
 
-@app.get("/")
+@app.get("/server")
 async def root():
     return {"message": "FounderHQ API is live 🚀", "docs": "/docs"}

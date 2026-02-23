@@ -10,16 +10,12 @@ from app.services.sentiment_service import analyze_text
 
 # Lightweight mock news for offline/dev mode
 _MOCK_NEWS = [
-    {"title": "Zepto raises $350M in Series G, eyes quick commerce dominance", "source": "Inc42", "url": "https://inc42.com/", "summary": "Zepto's latest funding round values the company at $5B, making it one of India's fastest-growing unicorns."},
-    {"title": "SEBI approves new framework for startup IPOs in India", "source": "Economic Times", "url": "https://economictimes.com/", "summary": "New regulations ease the path for Indian tech startups to go public with reduced lock-in periods."},
-    {"title": "AI startup Sarvam raises $41M to build India's foundational model", "source": "TechCrunch", "url": "https://techcrunch.com/", "summary": "Sarvam AI is building LLMs trained entirely on Indic languages, backed by Lightspeed and Peak XV."},
-    {"title": "PhonePe crosses 550M registered users, becomes India's largest fintech", "source": "Business Standard", "url": "https://business-standard.com/", "summary": "PhonePe now processes over 50% of all UPI transactions in India monthly."},
-    {"title": "India's startup ecosystem sees $4.5B in Q1 2024 funding — recovery signals", "source": "Inc42", "url": "https://inc42.com/", "summary": "VC funding is recovering after a difficult 2023, with SaaS and AI leading the charge."},
-    {"title": "Meesho achieves operational profitability, files for IPO", "source": "Mint", "url": "https://livemint.com/", "summary": "The social commerce giant is on track to list at a $4.5B valuation post-profitability milestone."},
-    {"title": "IIT graduates launch agritech startup, secures pre-seed from Accel", "source": "YourStory", "url": "https://yourstory.com/", "summary": "AgroAI uses satellite imagery and ML to help smallholder farmers optimize crop yields."},
-    {"title": "Navi Fintech receives RBI approval for small finance banking", "source": "The Hindu", "url": "https://thehindu.com/", "summary": "Sachin Bansal's Navi gets the green light to expand into deposit-taking and lending services."},
-    {"title": "Open Network for Digital Commerce (ONDC) hits 10M monthly transactions", "source": "Inc42", "url": "https://inc42.com/", "summary": "India's open e-commerce protocol is challenging Amazon and Flipkart with decentralized commerce."},
-    {"title": "Indian deeptech startups attract record $1.2B in 2024 — space and defence lead", "source": "YourStory", "url": "https://yourstory.com/", "summary": "Skyroot Aerospace, Agnikul Cosmos and others are driving a new wave of deeptech innovation."},
+    {"title": "Zepto raises $350M in Series G, eyes quick commerce dominance", "source": "Inc42", "url": "https://inc42.com/", "summary": "Zepto's latest funding round values the company at $5B, making it one of India's fastest-growing unicorns.", "image_url": "https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?auto=format&fit=crop&q=80&w=800"},
+    {"title": "SEBI approves new framework for startup IPOs in India", "source": "Economic Times", "url": "https://economictimes.com/", "summary": "New regulations ease the path for Indian tech startups to go public with reduced lock-in periods.", "image_url": "https://images.unsplash.com/photo-1611974717483-9b43793014b1?auto=format&fit=crop&q=80&w=800"},
+    {"title": "AI startup Sarvam raises $41M to build India's foundational model", "source": "TechCrunch", "url": "https://techcrunch.com/", "summary": "Sarvam AI is building LLMs trained entirely on Indic languages, backed by Lightspeed and Peak XV.", "image_url": "https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&q=80&w=800"},
+    {"title": "PhonePe crosses 550M registered users, becomes India's largest fintech", "source": "Business Standard", "url": "https://business-standard.com/", "summary": "PhonePe now processes over 50% of all UPI transactions in India monthly.", "image_url": "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&q=80&w=800"},
+    {"title": "India's startup ecosystem sees $4.5B in Q1 2024 funding — recovery signals", "source": "Inc42", "url": "https://inc42.com/", "summary": "VC funding is recovering after a difficult 2023, with SaaS and AI leading the charge.", "image_url": "https://images.unsplash.com/photo-1559136555-9303baea8ebd?auto=format&fit=crop&q=80&w=800"},
+    {"title": "Meesho achieves operational profitability, files for IPO", "source": "Mint", "url": "https://livemint.com/", "summary": "The social commerce giant is on track to list at a $4.5B valuation post-profitability milestone.", "image_url": "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&q=80&w=800"},
 ]
 
 _cached_articles: list[dict] = []
@@ -40,12 +36,15 @@ async def scrape_and_store():
                     title = item.find("title")
                     link = item.find("link")
                     desc = item.find("description")
+                    media = item.find("media:content") or item.find("enclosure")
+                    
                     if title and link:
                         articles.append({
                             "title": title.text.strip(),
                             "url": link.text.strip(),
                             "source": "YourStory",
                             "summary": BeautifulSoup(desc.text, "html.parser").get_text()[:200] if desc else "",
+                            "image_url": media.get("url") if media else None,
                         })
     except Exception:
         pass  # Network unavailable — use mock
@@ -61,6 +60,7 @@ async def scrape_and_store():
             url=art["url"],
             source=art["source"],
             summary=art.get("summary"),
+            image_url=art.get("image_url"),
             sentiment_score=score,
             sentiment_label=label,
             published_at=datetime.utcnow(),

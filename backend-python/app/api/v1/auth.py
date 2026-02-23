@@ -1,6 +1,8 @@
-from fastapi import APIRouter, HTTPException, status, Depends
+from fastapi import APIRouter, HTTPException, status, Depends, UploadFile, File
+import os
+import uuid
 from app.models.user import User
-from app.models.schemas import UserRegister, UserLogin, TokenResponse
+from app.models.schemas import UserRegister, UserLogin, TokenResponse, UserUpdate
 from app.auth import hash_password, verify_password, create_access_token, get_current_user
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -14,6 +16,7 @@ async def register(body: UserRegister):
     user = User(
         name=body.name,
         email=body.email,
+        phone_number=body.phone_number,
         hashed_password=hash_password(body.password),
         role=body.role,
     )
@@ -49,12 +52,67 @@ async def get_me(user: User = Depends(get_current_user)):
         "id": str(user.id),
         "name": user.name,
         "email": user.email,
+        "phone_number": user.phone_number,
         "role": user.role,
         "bio": user.bio,
         "company": user.company,
         "vetting_badge": user.vetting_badge,
         "avatar_url": user.avatar_url,
     }
+
+
+@router.put("/me")
+async def update_me(body: UserUpdate, current_user: User = Depends(get_current_user)):
+    if body.name is not None:
+        current_user.name = body.name
+    if body.email is not None:
+        current_user.email = body.email
+    if body.phone_number is not None:
+        current_user.phone_number = body.phone_number
+    if body.bio is not None:
+        current_user.bio = body.bio
+    if body.company is not None:
+        current_user.company = body.company
+        
+    await current_user.save()
+    return {
+        "id": str(current_user.id),
+        "name": current_user.name,
+        "email": current_user.email,
+        "phone_number": current_user.phone_number,
+        "role": current_user.role,
+        "bio": current_user.bio,
+        "company": current_user.company,
+        "vetting_badge": current_user.vetting_badge,
+        "avatar_url": current_user.avatar_url,
+    }
+
+
+@router.post("/avatar")
+async def upload_avatar(file: UploadFile = File(...), current_user: User = Depends(get_current_user)):
+    # Validate file type
+    if not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="File must be an image")
+        
+    # Generate unique filename
+    ext = file.filename.split(".")[-1]
+    filename = f"{uuid.uuid4()}.{ext}"
+    filepath = os.path.join("uploads", filename)
+    
+    # Save file
+    with open(filepath, "wb") as buffer:
+        content = await file.read()
+        buffer.write(content)
+        
+    # Construct URL (assuming server runs on standard host/port or using relative path)
+    # Using relative path so it works regardless of domain
+    avatar_url = f"/uploads/{filename}"
+    
+    # Update user
+    current_user.avatar_url = avatar_url
+    await current_user.save()
+    
+    return {"avatar_url": avatar_url}
 
 
 @router.get("/search")

@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: huddle-backend-deployment
+  namespace: founderhq_ns
+
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: founderhq-huddle-backend
+
+  template:
+    metadata:
+      labels:
+        app: founderhq-huddle-backend
+
+    spec:
+      initContainers:
+        - name: wait-for-mongodb
+          image: busybox:latest
+          command:
+            - sh
+            - -c
+            - >
+              until nc -z mongodb_service 27017;
+              do echo "waiting for mongodb";
+              sleep 2;
+              done;
+
+      containers:
+        - name: huddle-backend-container
+          image: huddle_backend:latest
+          ports:
+            - containerPort: 5001
+          volumeMounts:
+            - name: huddle-backend-logs
+              mountPath: /logs
+
+      volumes:
+        - name: huddle-backend-logs
+          persistentVolumeClaim:
+            claimName: huddle_backend_pvc
+
+---
+
+apiVersion: v1
+kind: Service
+
+metadata:
+  name: huddle-backend-service
+  namespace: founderhq_ns
+
+spec:
+  type: ClusterIP
+  selector:
+    app: founderhq-huddle-backend
+  ports:
+    - port: 5001
+      targetPort: 5001

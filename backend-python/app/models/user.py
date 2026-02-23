@@ -9,6 +9,7 @@ class User(Document):
     email: EmailStr
     hashed_password: str
     role: str = "founder"  # founder | investor | student | mentor
+    phone_number: Optional[str] = None
     bio: Optional[str] = None
     company: Optional[str] = None
     is_verified: bool = False

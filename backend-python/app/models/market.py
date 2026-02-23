@@ -23,6 +23,7 @@ class NewsArticle(Document):
     summary: Optional[str] = None
     sentiment_score: float = 0.0  # -1 to 1
     sentiment_label: str = "neutral"  # positive | negative | neutral
+    image_url: Optional[str] = None
     published_at: Optional[datetime] = None
     scraped_at: datetime = datetime.utcnow()
 

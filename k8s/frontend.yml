@@ -1,0 +1,50 @@
+# Frontend deployment
+kind: Deployment
+apiVersion: apps/v1
+
+metadata:
+  name: frontend_deployment
+  namespace: founderhq_ns
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: founderhq_frontend
+  template:
+    metadata:
+      labels:
+        app: founderhq_frontend
+
+    spec:
+      initContainers:
+        - name: wait_for_backend
+          image: busybox:latest
+          command:
+            [
+              "sh",
+              "-c",
+              "untill nc -z bakcned_service 8000;do echo waiting for backend ;sleep 2;done;",
+            ]
+
+      containers:
+        - name: frontend_container
+          image: nginx:latest
+          ports:
+            - containerPort: 3000
+
+---
+# Frontend Serviv mainfiest
+
+kind: Service
+apiVersion: v1
+
+metadata:
+  name: frontend_service
+  namespace: founderhq_ns
+spec:
+  type: ClusterIP
+  selector:
+    app: founderhq_frontend
+  ports:
+    - port: 3000
+      targetPort: 3000

@@ -7,12 +7,20 @@ from datetime import datetime
 class UserRegister(BaseModel):
     name: str
     email: str
+    phone_number: str
     password: str
     role: str = "founder"
 
 class UserLogin(BaseModel):
     email: str
     password: str
+
+class UserUpdate(BaseModel):
+    name: Optional[str] = None
+    email: Optional[str] = None
+    phone_number: Optional[str] = None
+    bio: Optional[str] = None
+    company: Optional[str] = None
 
 class TokenResponse(BaseModel):
     access_token: str
@@ -86,6 +94,7 @@ class PostResponse(BaseModel):
     file_name: Optional[str]
     file_url: Optional[str] = None
 
+# ─── Comment Schemas ──────────────────────────────────────────────────────────
 class CommentCreate(BaseModel):
     content: str
 
@@ -96,4 +105,17 @@ class CommentResponse(BaseModel):
     author_name: str
     author_role: str
     content: str
+    timestamp: datetime
+
+# ─── Schedule Schemas ──────────────────────────────────────────────────────────
+class ScheduleCreate(BaseModel):
+    title: str
+    time: str
+
+class ScheduleResponse(BaseModel):
+    id: str
+    user_id: str
+    title: str
+    time: str
+    is_completed: bool
     timestamp: datetime
