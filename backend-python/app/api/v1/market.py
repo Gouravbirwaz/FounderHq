@@ -23,20 +23,35 @@ async def stocks():
 
 @router.get("/news")
 async def news(limit: int = 20):
-    articles = await NewsArticle.find_all().sort(-NewsArticle.scraped_at).limit(limit).to_list()
-    return [
-        {
-            "id": str(a.id),
-            "title": a.title,
-            "url": a.url,
-            "source": a.source,
-            "summary": a.summary,
-            "sentiment_score": a.sentiment_score,
-            "sentiment_label": a.sentiment_label,
-            "published_at": a.published_at,
-        }
-        for a in articles
-    ]
+    articles = await get_cached_news()
+    # If the service returns mock dicts or Beanie models, handle both
+    result = []
+    for a in articles[:limit]:
+        if isinstance(a, dict):
+            result.append({
+                "id": a.get("id", "mock"),
+                "title": a.get("title"),
+                "url": a.get("url"),
+                "source": a.get("source"),
+                "summary": a.get("summary"),
+                "image_url": a.get("image_url"),
+                "sentiment_score": a.get("sentiment_score", 0.0),
+                "sentiment_label": a.get("sentiment_label", "neutral"),
+                "published_at": a.get("published_at"),
+            })
+        else: # Beanie model
+            result.append({
+                "id": str(a.id),
+                "title": a.title,
+                "url": a.url,
+                "source": a.source,
+                "summary": a.summary,
+                "image_url": a.image_url,
+                "sentiment_score": a.sentiment_score,
+                "sentiment_label": a.sentiment_label,
+                "published_at": a.published_at,
+            })
+    return result
 
 
 @router.get("/sentiment")

@@ -37,3 +37,5 @@ huddle-feature/server/.env
 
 # Local Backups
 backup/
+backend-python/uploads/
+backend-python/.env

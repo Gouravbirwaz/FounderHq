@@ -1,0 +1,13 @@
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+
+nodes:
+  - role: control-plane
+    extraMounts:
+      - hostPath: /mnt/c/Users/Acer/Desktop/test/databinding
+        containerPath: /databinding
+
+  - role: worker
+    extraMounts:
+      - hostPath: /mnt/c/Users/Acer/Desktop/test/databinding
+        containerPath: /databinding

@@ -1,13 +1,14 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
-
 metadata:
   name: founderhq-ingress
   namespace: founderhq_ns
-
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/enable-websocket: "true"
 spec:
   ingressClassName: nginx
-
   rules:
     - host: localhost
       http:
@@ -27,3 +28,25 @@ spec:
                 name: bakend_service
                 port:
                   number: 8000
+
+          - path: /rooms
+            pathType: Prefix
+            backend:
+              service:
+                name: huddle-backend-service
+                port:
+                  number: 5001
+          - path: /socket.io
+            pathType: Prefix
+            backend:
+              service:
+                name: huddle-backend-service
+                port:
+                  number: 5001
+          - path: /messages
+            pathType: Prefix
+            backend:
+              service:
+                name: huddle-backend-service
+                port:
+                  number: 5001

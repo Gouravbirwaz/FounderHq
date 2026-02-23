@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
+import 'package:flutter/services.dart';
 import '../../core/theme/app_theme.dart';
 import '../../services/webrtc_service.dart';
 import '../../services/socket_service.dart';
@@ -126,6 +127,46 @@ class _HuddleRoomViewState extends ConsumerState<HuddleRoomView> {
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(Icons.arrow_downward, color: Colors.white),
+                ),
+              ),
+            ),
+
+            // Room Code Display (Top Center)
+            Positioned(
+              top: 16,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.5),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: Colors.white.withOpacity(0.1)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'ID: ${widget.roomId}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      InkWell(
+                        onTap: () {
+                          Clipboard.setData(ClipboardData(text: widget.roomId));
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Room ID copied to clipboard')),
+                          );
+                        },
+                        child: const Icon(Icons.copy, color: AppTheme.techBlue, size: 16),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),

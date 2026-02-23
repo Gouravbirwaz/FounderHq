@@ -4,13 +4,18 @@ import { motion, AnimatePresence } from "framer-motion";
 import { RefreshCw, AlertCircle, Clock, Globe, ImageOff, ExternalLink } from "lucide-react";
 import { useTheme } from "next-themes";
 import * as React from "react";
+import { apiFetch } from "@/lib/api";
 
 interface Article {
+    id: string;
     title: string;
-    link: string;
-    pubDate: string;
+    url: string;
     source: string;
-    thumbnail: string;
+    summary: string;
+    sentiment_score: number;
+    sentiment_label: string;
+    published_at: string;
+    image_url?: string;
     category: string;
 }
 
@@ -39,50 +44,6 @@ const FILTERS = [
     { label: "AI", keywords: ["ai", "artificial intelligence", "machine learning", "llm", "gpt", "deeptech", "neural"] },
 ];
 
-function extractImage(item: any): string {
-    // 1. Direct thumbnail field
-    if (item.thumbnail && typeof item.thumbnail === "string" && item.thumbnail.startsWith("http")) {
-        return item.thumbnail;
-    }
-
-    // 2. Enclosure (with type check)
-    if (item.enclosure?.link && item.enclosure.type?.startsWith("image")) {
-        return item.enclosure.link;
-    }
-
-    // 3. Enclosure (without type check — some feeds omit type)
-    if (item.enclosure?.link && typeof item.enclosure.link === "string" && item.enclosure.link.startsWith("http")) {
-        const url = item.enclosure.link.toLowerCase();
-        if (url.match(/\.(jpg|jpeg|png|webp|gif|avif)/)) return item.enclosure.link;
-    }
-
-    // 4. Search through ALL HTML fields for <img> tags
-    const htmlFields = [item.content, item.description, item["content:encoded"]].filter(Boolean);
-    for (const html of htmlFields) {
-        // Try src attribute
-        const srcMatch = html.match(/<img[^>]+src=["']([^"']+)["']/i);
-        if (srcMatch?.[1]?.startsWith("http")) return srcMatch[1];
-
-        // Try data-src (lazy loading)
-        const dataSrcMatch = html.match(/<img[^>]+data-src=["']([^"']+)["']/i);
-        if (dataSrcMatch?.[1]?.startsWith("http")) return dataSrcMatch[1];
-
-        // Try srcset (first URL)
-        const srcsetMatch = html.match(/<img[^>]+srcset=["']([^\s"']+)/i);
-        if (srcsetMatch?.[1]?.startsWith("http")) return srcsetMatch[1];
-
-        // Try <figure> or <picture> source
-        const sourceMatch = html.match(/<source[^>]+srcset=["']([^\s"']+)/i);
-        if (sourceMatch?.[1]?.startsWith("http")) return sourceMatch[1];
-
-        // Try any URL that looks like an image
-        const urlMatch = html.match(/(https?:\/\/[^\s"'<>]+\.(?:jpg|jpeg|png|webp|gif|avif))/i);
-        if (urlMatch?.[1]) return urlMatch[1];
-    }
-
-    return "";
-}
-
 export function NewsSection({ compact = false }: { compact?: boolean }) {
     const { resolvedTheme } = useTheme();
     const [mounted, setMounted] = React.useState(false);
@@ -102,41 +63,26 @@ export function NewsSection({ compact = false }: { compact?: boolean }) {
         setLoading(true);
         setError(false);
         try {
-            const allNews: Article[] = [];
-            for (const source of SOURCES) {
-                try {
-                    const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${source.url}`);
-                    const data = await res.json();
-                    if (data.items) {
-                        data.items.slice(0, 12).forEach((item: any) => {
-                            const match = KEYWORDS.some(k =>
-                                item.title.toLowerCase().includes(k) ||
-                                item.description?.toLowerCase().includes(k)
-                            );
-                            if (match) {
-                                const text = `${item.title} ${item.description ?? ""}`.toLowerCase();
-                                let category = "Other";
-                                for (const f of FILTERS.slice(1)) {
-                                    if (f.keywords.some(k => text.includes(k))) { category = f.label; break; }
-                                }
-                                allNews.push({
-                                    title: item.title,
-                                    link: item.link,
-                                    pubDate: item.pubDate,
-                                    source: source.name,
-                                    thumbnail: extractImage(item),
-                                    category,
-                                });
-                            }
-                        });
+            const data = await apiFetch("/market/news");
+            if (Array.isArray(data)) {
+                const mappedNews: Article[] = data.map((item: any) => {
+                    const text = `${item.title} ${item.summary ?? ""}`.toLowerCase();
+                    let category = "Other";
+                    for (const f of FILTERS.slice(1)) {
+                        if (f.keywords.some(k => text.includes(k))) {
+                            category = f.label;
+                            break;
+                        }
                     }
-                } catch (e) {
-                    console.error(`Failed to fetch ${source.name}:`, e);
-                }
+                    return {
+                        ...item,
+                        category,
+                    };
+                });
+                setNews(mappedNews);
             }
-            const sorted = allNews.sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime());
-            setNews(sorted.slice(0, 20));
-        } catch {
+        } catch (e) {
+            console.error(`Failed to fetch news from backend:`, e);
             setError(true);
         } finally {
             setLoading(false);
@@ -227,8 +173,8 @@ export function NewsSection({ compact = false }: { compact?: boolean }) {
                             const sourceColor = SOURCE_COLORS[item.source] || "#8b5cf6";
                             return (
                                 <a
-                                    key={item.link + i}
-                                    href={item.link}
+                                    key={item.url + i}
+                                    href={item.url}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     style={{
@@ -262,7 +208,7 @@ export function NewsSection({ compact = false }: { compact?: boolean }) {
                                         <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 6 }}>
                                             <span style={{ fontSize: 10, fontWeight: 700, color: sourceColor, textTransform: "uppercase", letterSpacing: "0.05em" }}>{item.source}</span>
                                             <span style={{ fontSize: 10, color: "var(--text-tertiary)" }}>·</span>
-                                            <span style={{ fontSize: 10, color: "var(--text-tertiary)", fontWeight: 500 }}>{timeAgo(item.pubDate)}</span>
+                                            <span style={{ fontSize: 10, color: "var(--text-tertiary)", fontWeight: 500 }}>{timeAgo(item.published_at)}</span>
                                         </div>
                                     </div>
                                 </a>
@@ -346,11 +292,13 @@ export function NewsSection({ compact = false }: { compact?: boolean }) {
                         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                             {filtered.map((item, i) => {
                                 const sourceColor = SOURCE_COLORS[item.source] || "#8b5cf6";
-                                const hasImage = item.thumbnail && !failedImages.has(item.thumbnail);
+                                const fallbackImage = 'https://images.unsplash.com/photo-1495020689067-958852a7765e?auto=format&fit=crop&q=80&w=800';
+                                const imageUrl = item.image_url || fallbackImage;
+                                const hasImage = imageUrl && !failedImages.has(imageUrl);
                                 return (
                                     <motion.a
-                                        key={item.link + i}
-                                        href={item.link}
+                                        key={item.url + i}
+                                        href={item.url}
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         initial={{ opacity: 0, y: 12 }}
@@ -381,14 +329,14 @@ export function NewsSection({ compact = false }: { compact?: boolean }) {
                                         }}>
                                             {hasImage ? (
                                                 <img
-                                                    src={item.thumbnail}
+                                                    src={imageUrl}
                                                     alt=""
                                                     style={{
                                                         width: "100%", height: "100%", objectFit: "cover",
                                                         transition: "transform 0.4s ease",
                                                     }}
                                                     className="group-hover:scale-105"
-                                                    onError={() => setFailedImages(prev => new Set(prev).add(item.thumbnail))}
+                                                    onError={() => setFailedImages(prev => new Set(prev).add(imageUrl))}
                                                 />
                                             ) : (
                                                 <div className="flex items-center justify-center h-full">
@@ -451,7 +399,7 @@ export function NewsSection({ compact = false }: { compact?: boolean }) {
                                             }}>
                                                 <div className="flex items-center gap-1.5" style={{ color: "var(--text-tertiary)" }}>
                                                     <Clock size={11} strokeWidth={2.2} />
-                                                    <span style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase" }}>{timeAgo(item.pubDate)}</span>
+                                                    <span style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase" }}>{timeAgo(item.published_at)}</span>
                                                 </div>
                                                 {item.category !== "Other" && (
                                                     <span style={{
