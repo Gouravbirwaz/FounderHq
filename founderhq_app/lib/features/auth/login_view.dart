@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/providers/auth_provider.dart';
 import '../../shared/glass_card.dart';
+import '../../services/biometric_service.dart';
 import 'register_view.dart';
 
 class LoginView extends ConsumerStatefulWidget {
@@ -15,6 +16,26 @@ class LoginView extends ConsumerStatefulWidget {
 class _LoginViewState extends ConsumerState<LoginView> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _biometricService = BiometricService();
+  bool _isBiometricAvailable = false;
+  bool _hasSavedCredentials = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkBiometrics();
+  }
+
+  Future<void> _checkBiometrics() async {
+    final isAvailable = await _biometricService.isBiometricAvailable();
+    final hasCredentials = await ref.read(authProvider.notifier).hasSavedCredentials();
+    if (mounted) {
+      setState(() {
+        _isBiometricAvailable = isAvailable;
+        _hasSavedCredentials = hasCredentials;
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -43,6 +64,36 @@ class _LoginViewState extends ConsumerState<LoginView> {
     }
   }
 
+  Future<void> _handleBiometricLogin() async {
+    print('Biometric button pressed.');
+    final authenticated = await _biometricService.authenticate();
+    print('Service returned authentication status: $authenticated');
+    if (authenticated) {
+      print('Calling loginWithBiometrics()...');
+      final success = await ref.read(authProvider.notifier).loginWithBiometrics();
+      print('loginWithBiometrics() result: $success');
+      if (!success && mounted) {
+        final error = ref.read(authProvider).error;
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(error ?? 'Biometric Login Failed'),
+          backgroundColor: Colors.redAccent,
+        ));
+      } else if (success && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Device Authenticated! Logging you in...'),
+          backgroundColor: Colors.green,
+        ));
+      }
+    } else {
+      print('Biometric authentication failed or was cancelled.');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Authentication failed or cancelled'),
+        ));
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
@@ -57,7 +108,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Branding
+                // ... (Branding parts unchanged)
                 const Text(
                   'FounderHQ',
                   style: TextStyle(
@@ -139,47 +190,69 @@ class _LoginViewState extends ConsumerState<LoginView> {
                       ),
                       const SizedBox(height: 32),
                       
-                      // Sign In Button
-                      Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(16),
-                          gradient: const LinearGradient(
-                            colors: [AppTheme.techBlue, Color(0xFF0056b3)],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppTheme.techBlue.withOpacity(0.4),
-                              blurRadius: 20,
-                              offset: const Offset(0, 8),
-                            ),
-                          ],
-                        ),
-                        child: ElevatedButton(
-                          onPressed: authState.isLoading ? null : _handleLogin,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.transparent,
-                            shadowColor: Colors.transparent,
-                            padding: const EdgeInsets.symmetric(vertical: 20),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                          ),
-                          child: authState.isLoading
-                              ? const SizedBox(
-                                  height: 24,
-                                  width: 24,
-                                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                                )
-                              : const Text(
-                                  'Enter Command Center',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
+                      // Action Buttons
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(16),
+                                gradient: const LinearGradient(
+                                  colors: [AppTheme.techBlue, Color(0xFF0056b3)],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppTheme.techBlue.withOpacity(0.4),
+                                    blurRadius: 20,
+                                    offset: const Offset(0, 8),
+                                  ),
+                                ],
+                              ),
+                              child: ElevatedButton(
+                                onPressed: authState.isLoading ? null : _handleLogin,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.transparent,
+                                  shadowColor: Colors.transparent,
+                                  padding: const EdgeInsets.symmetric(vertical: 20),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
                                   ),
                                 ),
-                        ),
+                                child: authState.isLoading
+                                    ? const SizedBox(
+                                        height: 24,
+                                        width: 24,
+                                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                      )
+                                    : const Text(
+                                        'Enter Command Center',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                              ),
+                            ),
+                          ),
+                          if (_isBiometricAvailable && _hasSavedCredentials) ...[
+                            const SizedBox(width: 16),
+                            Container(
+                              height: 60,
+                              width: 60,
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(color: AppTheme.techBlue.withOpacity(0.3)),
+                              ),
+                              child: IconButton(
+                                icon: const Icon(Icons.fingerprint, color: AppTheme.techBlue, size: 32),
+                                onPressed: authState.isLoading ? null : _handleBiometricLogin,
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                       
                       const SizedBox(height: 24),

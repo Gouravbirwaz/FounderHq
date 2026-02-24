@@ -82,14 +82,15 @@ io.on('connection', (socket) => {
         socket.join(roomCode);
         console.log(`User ${socket.user.id} joining room ${roomCode}`);
 
-        // Track participant
+        // Track participant (use socketId as primary tracking for signaling)
         await Participant.findOneAndUpdate(
-            { roomCode, userId: socket.user.id },
             { socketId: socket.id },
+            { roomCode, userId: socket.user.id },
             { upsert: true }
         );
 
-        // Update room participants list if not already there
+        // Update room participants list
+        // Note: We use $addToSet to deduplicate userId for the room's participant list
         await Room.findOneAndUpdate(
             { roomCode },
             { $addToSet: { participants: socket.user.id }, lastActivityAt: Date.now() }
@@ -99,20 +100,47 @@ io.on('connection', (socket) => {
         await new ActivityLog({ roomCode, userId: socket.user.id, action: 'join' }).save();
 
         // Broadcast to others in room
+        const room = io.sockets.adapter.rooms.get(roomCode);
+        const participantCount = room ? room.size : 0;
+        console.log(`Room ${roomCode} now has ${participantCount} sockets.`);
+
+        // Notify others
         socket.to(roomCode).emit('user-joined', { userId: socket.user.id, socketId: socket.id });
 
-        console.log(`User ${socket.user.id} joined room ${roomCode}`);
+        // IMPORTANT: Return currently active participants to the joiner
+        // Filter out current user's socket so they don't call themselves
+        const currentParticipants = [];
+        if (room) {
+            for (const socketId of room) {
+                if (socketId !== socket.id) {
+                    const s = io.sockets.sockets.get(socketId);
+                    currentParticipants.push({
+                        socketId: socketId,
+                        userId: s ? s.user.id : null
+                    });
+                }
+            }
+        }
+
+        // Acknowledge join and send list
+        socket.emit('room-joined', {
+            participants: currentParticipants,
+            participantCount: participantCount
+        });
     });
 
     socket.on('offer', ({ to, offer }) => {
+        console.log(`Relaying offer from ${socket.id} to ${to}`);
         socket.to(to).emit('offer', { from: socket.id, offer });
     });
 
     socket.on('answer', ({ to, answer }) => {
+        console.log(`Relaying answer from ${socket.id} to ${to}`);
         socket.to(to).emit('answer', { from: socket.id, answer });
     });
 
     socket.on('ice-candidate', ({ to, candidate }) => {
+        console.log(`Relaying ICE candidate from ${socket.id} to ${to}`);
         socket.to(to).emit('ice-candidate', { from: socket.id, candidate });
     });
 

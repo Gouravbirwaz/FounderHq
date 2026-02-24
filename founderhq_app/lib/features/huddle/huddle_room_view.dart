@@ -48,6 +48,9 @@ class _HuddleRoomViewState extends ConsumerState<HuddleRoomView> {
     }
     
     _webRTCService = WebRTCService(socketService.socket);
+    _webRTCService.onRemoteStream = () {
+      if (mounted) setState(() {});
+    };
     await _initWebRTC();
     if (mounted) setState(() => _isInit = true);
   }

@@ -75,6 +75,10 @@ class AuthNotifier extends Notifier<AuthState> {
       final token = res.data['access_token'];
       await _storage.write(key: 'jwt', value: token);
       
+      // Store credentials for biometric login
+      await _storage.write(key: 'saved_email', value: email);
+      await _storage.write(key: 'saved_password', value: password);
+      
       state = state.copyWith(isAuthenticated: true, isLoading: false);
       // Fetch user details
       await _initAuth();
@@ -87,6 +91,35 @@ class AuthNotifier extends Notifier<AuthState> {
       state = state.copyWith(isLoading: false, error: e.toString());
       return false;
     }
+  }
+
+  Future<bool> loginWithBiometrics() async {
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      print('Attempting biometric login...');
+      final email = await _storage.read(key: 'saved_email');
+      final password = await _storage.read(key: 'saved_password');
+      print('Retrieved email: ${email != null}');
+      print('Retrieved password: ${password != null}');
+
+      if (email == null || password == null) {
+        state = state.copyWith(isLoading: false, error: 'No stored credentials found. Please log in manually first.');
+        return false;
+      }
+
+      print('Calling login(email, password)...');
+      return await login(email, password);
+    } catch (e) {
+      print('Biometric login error: $e');
+      state = state.copyWith(isLoading: false, error: 'Biometric login failed: ${e.toString()}');
+      return false;
+    }
+  }
+
+  Future<bool> hasSavedCredentials() async {
+    final email = await _storage.read(key: 'saved_email');
+    final password = await _storage.read(key: 'saved_password');
+    return email != null && password != null;
   }
 
   Future<bool> register(String name, String email, String phoneNumber, String password, String role) async {
