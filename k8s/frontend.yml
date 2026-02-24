@@ -14,15 +14,6 @@ spec:
       labels:
         app: founderhq-frontend
     spec:
-      initContainers:
-        - name: wait-for-backend
-          image: busybox:latest
-          command:
-            [
-              "sh",
-              "-c",
-              "until nc -z backend-container 8000; do echo waiting for backend; sleep 2; done;",
-            ]
       containers:
         - name: frontend-container
           image: gourav1310/founderhq_frontend:1e4bca1b3f824ba934cee18406d6d0c6944de52f
