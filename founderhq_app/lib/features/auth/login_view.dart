@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/providers/auth_provider.dart';
 import '../../shared/glass_card.dart';
@@ -118,105 +119,121 @@ class _LoginViewState extends ConsumerState<LoginView> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // ... (Branding parts unchanged)
-                const Text(
-                  'FounderHQ',
-                  style: TextStyle(
-                    fontSize: 48,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    letterSpacing: -1.5,
-                  ),
-                  textAlign: TextAlign.center,
+                // Branding
+                Column(
+                  children: [
+                    Container(
+                      height: 80,
+                      width: 80,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: LinearGradient(
+                          colors: [AppTheme.techBlue, AppTheme.techBlue.withOpacity(0.5)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppTheme.techBlue.withOpacity(0.4),
+                            blurRadius: 30,
+                            offset: const Offset(0, 10),
+                          ),
+                        ],
+                      ),
+                      child: const Icon(Icons.rocket_launch, color: Colors.white, size: 40),
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      'FounderHQ',
+                      style: GoogleFonts.outfit(
+                        fontSize: 52,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                        letterSpacing: -1.5,
+                        height: 1.1,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'The Command Center for Founders',
+                      style: GoogleFonts.inter(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w400,
+                        color: Colors.white.withOpacity(0.6),
+                        letterSpacing: 0.5,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  'The Command Center for Founders',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.white.withOpacity(0.7),
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 48),
+                const SizedBox(height: 56),
 
                 // Login Form
                 GlassCard(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const Text(
-                        'Sign In',
-                        style: TextStyle(
+                      Text(
+                        'Welcome Back',
+                        style: GoogleFonts.outfit(
                           fontSize: 28,
-                          fontWeight: FontWeight.bold,
+                          fontWeight: FontWeight.w700,
                           color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Sign in to continue to your dashboard.',
+                        style: GoogleFonts.inter(
+                          fontSize: 14,
+                          color: Colors.white.withOpacity(0.5),
                         ),
                       ),
                       const SizedBox(height: 32),
                       
                       // Email Field
-                      TextField(
+                      _buildPremiumTextField(
                         controller: _emailController,
-                        style: const TextStyle(color: Colors.white),
-                        decoration: InputDecoration(
-                          labelText: 'Email Address',
-                          labelStyle: TextStyle(color: Colors.white.withOpacity(0.6)),
-                          filled: true,
-                          fillColor: Colors.black.withOpacity(0.2),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            borderSide: BorderSide.none,
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            borderSide: const BorderSide(color: AppTheme.techBlue, width: 2),
-                          ),
-                          prefixIcon: const Icon(Icons.email_outlined, color: AppTheme.techBlue),
-                        ),
+                        label: 'Email Address',
+                        icon: Icons.alternate_email,
+                        isObscure: false,
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 20),
                       
                       // Password Field
-                      TextField(
+                      _buildPremiumTextField(
                         controller: _passwordController,
-                        obscureText: true,
-                        style: const TextStyle(color: Colors.white),
-                        decoration: InputDecoration(
-                          labelText: 'Password',
-                          labelStyle: TextStyle(color: Colors.white.withOpacity(0.6)),
-                          filled: true,
-                          fillColor: Colors.black.withOpacity(0.2),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            borderSide: BorderSide.none,
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            borderSide: const BorderSide(color: AppTheme.techBlue, width: 2),
-                          ),
-                          prefixIcon: const Icon(Icons.lock_outline, color: AppTheme.techBlue),
-                        ),
+                        label: 'Password',
+                        icon: Icons.lock_outline,
+                        isObscure: true,
                       ),
-                      const SizedBox(height: 32),
+                      const SizedBox(height: 40),
                       
                       // Action Buttons
                       Row(
                         children: [
                           Expanded(
                             child: Container(
+                              height: 60,
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(16),
-                                gradient: const LinearGradient(
-                                  colors: [AppTheme.techBlue, Color(0xFF0056b3)],
+                                gradient: LinearGradient(
+                                  colors: [AppTheme.techBlue, const Color(0xFF0284C7)],
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
                                 ),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: AppTheme.techBlue.withOpacity(0.4),
-                                    blurRadius: 20,
-                                    offset: const Offset(0, 8),
+                                    color: AppTheme.techBlue.withOpacity(0.5),
+                                    blurRadius: 30,
+                                    offset: const Offset(0, 10),
+                                  ),
+                                  BoxShadow(
+                                    color: Colors.white.withOpacity(0.2),
+                                    blurRadius: 0,
+                                    spreadRadius: 1,
+                                    offset: const Offset(0, 1), // Top highlight
                                   ),
                                 ],
                               ),
@@ -225,7 +242,6 @@ class _LoginViewState extends ConsumerState<LoginView> {
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.transparent,
                                   shadowColor: Colors.transparent,
-                                  padding: const EdgeInsets.symmetric(vertical: 20),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(16),
                                   ),
@@ -236,11 +252,13 @@ class _LoginViewState extends ConsumerState<LoginView> {
                                         width: 24,
                                         child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                                       )
-                                    : const Text(
+                                    : Text(
                                         'Enter Command Center',
-                                        style: TextStyle(
+                                        style: GoogleFonts.inter(
                                           fontSize: 16,
-                                          fontWeight: FontWeight.bold,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.white,
+                                          letterSpacing: 0.5,
                                         ),
                                       ),
                               ),
@@ -252,12 +270,19 @@ class _LoginViewState extends ConsumerState<LoginView> {
                               height: 60,
                               width: 60,
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.1),
+                                color: const Color(0xFF1E293B).withOpacity(0.8),
                                 borderRadius: BorderRadius.circular(16),
-                                border: Border.all(color: AppTheme.techBlue.withOpacity(0.3)),
+                                border: Border.all(color: Colors.white.withOpacity(0.1)),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.2),
+                                    blurRadius: 15,
+                                    offset: const Offset(0, 8),
+                                  )
+                                ],
                               ),
                               child: IconButton(
-                                icon: const Icon(Icons.fingerprint, color: AppTheme.techBlue, size: 32),
+                                icon: const Icon(Icons.fingerprint, color: AppTheme.techBlue, size: 28),
                                 onPressed: authState.isLoading ? null : _handleBiometricLogin,
                               ),
                             ),
@@ -265,11 +290,14 @@ class _LoginViewState extends ConsumerState<LoginView> {
                         ],
                       ),
                       
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 32),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Text('New to FounderHQ? ', style: TextStyle(color: Colors.white.withOpacity(0.6))),
+                          Text(
+                            'New to FounderHQ? ', 
+                            style: GoogleFonts.inter(color: Colors.white.withOpacity(0.5))
+                          ),
                           TextButton(
                             onPressed: () {
                               Navigator.pushReplacement(
@@ -277,7 +305,15 @@ class _LoginViewState extends ConsumerState<LoginView> {
                                 MaterialPageRoute(builder: (_) => const RegisterView()),
                               );
                             },
-                            child: const Text('Request Access', style: TextStyle(color: AppTheme.techBlue, fontWeight: FontWeight.bold)),
+                            style: TextButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(horizontal: 8),
+                              minimumSize: Size.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                            child: Text(
+                              'Request Access', 
+                              style: GoogleFonts.inter(color: AppTheme.techBlue, fontWeight: FontWeight.w600)
+                            ),
                           ),
                         ],
                       ),
@@ -287,6 +323,34 @@ class _LoginViewState extends ConsumerState<LoginView> {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPremiumTextField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    required bool isObscure,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E293B).withOpacity(0.5), // Deep slate background
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withOpacity(0.1)),
+      ),
+      child: TextField(
+        controller: controller,
+        obscureText: isObscure,
+        style: GoogleFonts.inter(color: Colors.white, fontSize: 16),
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: GoogleFonts.inter(color: Colors.white.withOpacity(0.4)),
+          floatingLabelStyle: GoogleFonts.inter(color: AppTheme.techBlue, fontWeight: FontWeight.w500),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+          prefixIcon: Icon(icon, color: Colors.white.withOpacity(0.4), size: 22),
         ),
       ),
     );
