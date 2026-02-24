@@ -138,7 +138,7 @@ class AuthNotifier extends Notifier<AuthState> {
     }
 
     // Fallback to credential-based biometric login if token is missing
-    state = state.copyWith(isLoading: true, error: null);
+    print('Token missing or not locked, falling back to instant credential login...');
     try {
       final email = await _storage.read(key: 'saved_email');
       final password = await _storage.read(key: 'saved_password');
@@ -148,9 +148,20 @@ class AuthNotifier extends Notifier<AuthState> {
         return false;
       }
 
-      return await login(email, password);
+      // Immediately unlock the session for the user
+      state = state.copyWith(
+        isAuthenticated: true,
+        isBiometricLocked: false,
+        isLoading: false,
+        error: null,
+      );
+
+      // Perform the backend login in the background silently
+      login(email, password);
+      
+      return true;
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: 'Login failed');
+      state = state.copyWith(isLoading: false, error: 'Biometric unlock failed');
       return false;
     }
   }
