@@ -12,7 +12,7 @@ class SocketService {
 
   void _initSocket() {
     _socket = IO.io(serverUrl, <String, dynamic>{
-      'transports': ['websocket'],
+      'transports': ['websocket', 'polling'],
       'autoConnect': false,
     });
 

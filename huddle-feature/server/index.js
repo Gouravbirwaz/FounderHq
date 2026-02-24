@@ -123,10 +123,17 @@ io.on('connection', (socket) => {
         }
 
         // Acknowledge join and send list
+        const peerList = currentParticipants.map(p => p.socketId).join(', ');
+        console.log(`Sending 'room-joined' to ${socket.id} with ${currentParticipants.length} peers: [${peerList}]`);
         socket.emit('room-joined', {
             participants: currentParticipants,
             participantCount: participantCount
         });
+    });
+
+    socket.on('ping-signaling', ({ to }) => {
+        console.log(`Relaying signaling ping from ${socket.id} to ${to}`);
+        socket.to(to).emit('pong-signaling', { from: socket.id });
     });
 
     socket.on('offer', ({ to, offer }) => {

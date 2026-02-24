@@ -51,6 +51,9 @@ class _HuddleRoomViewState extends ConsumerState<HuddleRoomView> {
     _webRTCService.onRemoteStream = () {
       if (mounted) setState(() {});
     };
+    _webRTCService.onStateChange = () {
+      if (mounted) setState(() {});
+    };
     await _initWebRTC();
     if (mounted) setState(() => _isInit = true);
   }
@@ -121,16 +124,23 @@ class _HuddleRoomViewState extends ConsumerState<HuddleRoomView> {
             Positioned(
               top: 16,
               left: 16,
-              child: InkWell(
-                onTap: () => Navigator.pop(context),
-                child: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.5),
-                    shape: BoxShape.circle,
+              right: 16,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  InkWell(
+                    onTap: () => Navigator.pop(context),
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.5),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.arrow_downward, color: Colors.white),
+                    ),
                   ),
-                  child: const Icon(Icons.arrow_downward, color: Colors.white),
-                ),
+                  _connectionStatusBadge(),
+                ],
               ),
             ),
 
@@ -221,6 +231,77 @@ class _HuddleRoomViewState extends ConsumerState<HuddleRoomView> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _connectionStatusBadge() {
+    Color statusColor = Colors.orange;
+    String statusText = 'Connecting...';
+    
+    switch (_webRTCService.iceConnectionState) {
+      case RTCIceConnectionState.RTCIceConnectionStateConnected:
+      case RTCIceConnectionState.RTCIceConnectionStateCompleted:
+        statusColor = Colors.green;
+        statusText = 'Connected (${_webRTCService.participantCount})';
+        break;
+      case RTCIceConnectionState.RTCIceConnectionStateFailed:
+        statusColor = Colors.red;
+        statusText = 'Failed';
+        break;
+      case RTCIceConnectionState.RTCIceConnectionStateChecking:
+        statusColor = Colors.orange;
+        statusText = 'Networking...';
+        break;
+      default:
+        // Fallback to Peer Connection State if ICE isn't tracking yet
+        statusText = _webRTCService.connectionState.toString().split('.').last.replaceAll('RTCPeerConnectionState', '');
+    }
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (_webRTCService.participantCount > 1)
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: InkWell(
+              onTap: () => _webRTCService.testSignaling(),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  'Test: ${_webRTCService.signalingTestStatus}',
+                  style: const TextStyle(color: Colors.white70, fontSize: 10),
+                ),
+              ),
+            ),
+          ),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: statusColor.withOpacity(0.2),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: statusColor.withOpacity(0.5)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(color: statusColor, shape: BoxShape.circle),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                statusText,
+                style: TextStyle(color: statusColor, fontSize: 12, fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 

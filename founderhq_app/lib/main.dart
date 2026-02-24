@@ -46,7 +46,7 @@ class AuthWrapper extends ConsumerWidget {
       );
     }
 
-    if (authState.isAuthenticated) {
+    if (authState.isAuthenticated && !authState.isBiometricLocked) {
       return const MainView();
     }
 

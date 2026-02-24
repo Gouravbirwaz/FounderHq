@@ -7,27 +7,35 @@ import 'market_provider.dart';
 class AuthState {
   final bool isAuthenticated;
   final bool isLoading;
+  final bool isBiometricLocked;
   final String? error;
   final Map<String, dynamic>? user;
+  final String? token;
 
   const AuthState({
     this.isAuthenticated = false,
     this.isLoading = true,
+    this.isBiometricLocked = false,
     this.error,
     this.user,
+    this.token,
   });
 
   AuthState copyWith({
     bool? isAuthenticated,
     bool? isLoading,
+    bool? isBiometricLocked,
     String? error,
     Map<String, dynamic>? user,
+    String? token,
   }) {
     return AuthState(
       isAuthenticated: isAuthenticated ?? this.isAuthenticated,
       isLoading: isLoading ?? this.isLoading,
+      isBiometricLocked: isBiometricLocked ?? this.isBiometricLocked,
       error: error,
       user: user ?? this.user,
+      token: token ?? this.token,
     );
   }
 }
@@ -43,23 +51,39 @@ class AuthNotifier extends Notifier<AuthState> {
 
   Future<void> _initAuth() async {
     final token = await _storage.read(key: 'jwt');
+    final biometricEnabled = await _storage.read(key: 'biometric_enabled') == 'true';
+
     if (token != null && token.isNotEmpty) {
-      // Validate token by fetching 'me'
-      try {
-        final client = ref.read(apiClientProvider);
-        final res = await client.dio.get('/api/v1/auth/me');
+      if (biometricEnabled) {
+        // We have a token but need biometrics to "unlock"
         state = state.copyWith(
-          isAuthenticated: true,
+          isBiometricLocked: true,
           isLoading: false,
-          user: res.data as Map<String, dynamic>,
+          token: token,
         );
-      } catch (e) {
-        // Token invalid or expired
-        await _storage.delete(key: 'jwt');
-        state = state.copyWith(isAuthenticated: false, isLoading: false);
+      } else {
+        // Auto-login if biometrics not enabled
+        await _validateToken(token);
       }
     } else {
       state = state.copyWith(isAuthenticated: false, isLoading: false);
+    }
+  }
+
+  Future<void> _validateToken(String token) async {
+    try {
+      final client = ref.read(apiClientProvider);
+      final res = await client.dio.get('/api/v1/auth/me');
+      state = state.copyWith(
+        isAuthenticated: true,
+        isLoading: false,
+        isBiometricLocked: false,
+        user: res.data as Map<String, dynamic>,
+        token: token,
+      );
+    } catch (e) {
+      // Token invalid or expired
+      await logout();
     }
   }
 
@@ -79,9 +103,12 @@ class AuthNotifier extends Notifier<AuthState> {
       await _storage.write(key: 'saved_email', value: email);
       await _storage.write(key: 'saved_password', value: password);
       
-      state = state.copyWith(isAuthenticated: true, isLoading: false);
+      state = state.copyWith(isAuthenticated: true, isLoading: false, token: token);
+      // Automatically enable biometrics after first successful login
+      await _storage.write(key: 'biometric_enabled', value: 'true');
+      
       // Fetch user details
-      await _initAuth();
+      await _validateToken(token);
       return true;
     } on DioException catch (e) {
       final detail = e.response?.data?['detail'] ?? 'Login failed';
@@ -94,26 +121,33 @@ class AuthNotifier extends Notifier<AuthState> {
   }
 
   Future<bool> loginWithBiometrics() async {
+    if (state.isBiometricLocked && state.token != null) {
+      print('Unlocking with stored JWT...');
+      state = state.copyWith(isLoading: true, error: null);
+      await _validateToken(state.token!);
+      return state.isAuthenticated;
+    }
+
+    // Fallback to credential-based biometric login if token is missing
     state = state.copyWith(isLoading: true, error: null);
     try {
-      print('Attempting biometric login...');
       final email = await _storage.read(key: 'saved_email');
       final password = await _storage.read(key: 'saved_password');
-      print('Retrieved email: ${email != null}');
-      print('Retrieved password: ${password != null}');
 
       if (email == null || password == null) {
-        state = state.copyWith(isLoading: false, error: 'No stored credentials found. Please log in manually first.');
+        state = state.copyWith(isLoading: false, error: 'Please log in manually first.');
         return false;
       }
 
-      print('Calling login(email, password)...');
       return await login(email, password);
     } catch (e) {
-      print('Biometric login error: $e');
-      state = state.copyWith(isLoading: false, error: 'Biometric login failed: ${e.toString()}');
+      state = state.copyWith(isLoading: false, error: 'Login failed');
       return false;
     }
+  }
+
+  Future<bool> isBiometricEnabled() async {
+    return (await _storage.read(key: 'biometric_enabled')) == 'true';
   }
 
   Future<bool> hasSavedCredentials() async {

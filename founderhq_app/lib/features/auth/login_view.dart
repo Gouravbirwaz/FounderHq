@@ -29,10 +29,20 @@ class _LoginViewState extends ConsumerState<LoginView> {
   Future<void> _checkBiometrics() async {
     final isAvailable = await _biometricService.isBiometricAvailable();
     final hasCredentials = await ref.read(authProvider.notifier).hasSavedCredentials();
+    final isBiometricEnabled = await ref.read(authProvider.notifier).isBiometricEnabled();
+    
     if (mounted) {
       setState(() {
         _isBiometricAvailable = isAvailable;
         _hasSavedCredentials = hasCredentials;
+      });
+    }
+
+    // Auto-trigger biometric if app is locked and biometrics are ready
+    final authState = ref.read(authProvider);
+    if (authState.isBiometricLocked && isAvailable && isBiometricEnabled) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _handleBiometricLogin();
       });
     }
   }
@@ -72,16 +82,16 @@ class _LoginViewState extends ConsumerState<LoginView> {
       print('Calling loginWithBiometrics()...');
       final success = await ref.read(authProvider.notifier).loginWithBiometrics();
       print('loginWithBiometrics() result: $success');
-      if (!success && mounted) {
+      if (success && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Session Unlocked! Welcome back.'),
+          backgroundColor: Colors.green,
+        ));
+      } else if (!success && mounted) {
         final error = ref.read(authProvider).error;
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(error ?? 'Biometric Login Failed'),
+          content: Text(error ?? 'Unlock Failed'),
           backgroundColor: Colors.redAccent,
-        ));
-      } else if (success && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Device Authenticated! Logging you in...'),
-          backgroundColor: Colors.green,
         ));
       }
     } else {

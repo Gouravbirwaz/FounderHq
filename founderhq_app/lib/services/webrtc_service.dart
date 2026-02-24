@@ -31,7 +31,14 @@ class WebRTCService {
   bool isMuted = false;
   bool isVideoEnabled = true;
 
+  RTCPeerConnectionState connectionState = RTCPeerConnectionState.RTCPeerConnectionStateNew;
+  int participantCount = 1;
+
   Function? onRemoteStream;
+  Function? onStateChange;
+
+  RTCIceConnectionState iceConnectionState = RTCIceConnectionState.RTCIceConnectionStateNew;
+  String signalingTestStatus = 'Idle';
 
   WebRTCService(this.socket) {
     _setupSocketListeners();
@@ -39,16 +46,35 @@ class WebRTCService {
 
   void _setupSocketListeners() {
     // Clear any previous listeners to avoid duplicates
-    socket.off('user-joined');
     socket.off('offer');
     socket.off('answer');
     socket.off('ice-candidate');
+    socket.off('room-joined');
+    socket.off('user-left');
+    socket.off('pong-signaling');
+
+    socket.on('pong-signaling', (data) {
+      print('Received signaling PONG from: ${data['from']}');
+      signalingTestStatus = 'Success';
+      if (onStateChange != null) onStateChange!();
+    });
 
     socket.on('user-joined', (data) async {
       final remoteSocketId = data['socketId'];
-      print('User joined: $remoteSocketId. Initiating offer...');
+      print('New user joined: $remoteSocketId. Waiting for their offer...');
       _targetSocketId = remoteSocketId;
-      await _createOffer();
+      // We don't initiate offer here anymore to avoid collisions.
+      // The joiner will send us an offer when they receive 'room-joined'.
+    });
+
+    socket.on('user-left', (data) {
+      final remoteSocketId = data['socketId'];
+      print('User left: $remoteSocketId');
+      if (remoteSocketId == _targetSocketId) {
+        _targetSocketId = null;
+        remoteRenderer.srcObject = null;
+        if (onRemoteStream != null) onRemoteStream!();
+      }
     });
 
     socket.on('offer', (data) async {
@@ -71,20 +97,28 @@ class WebRTCService {
       final candidateMap = data['candidate'];
       print('Received ICE candidate from: $from');
       if (peerConnection != null && 
-          peerConnection!.signalingState != RTCSignalingState.RTCSignalingStateClosed &&
-          (await peerConnection!.getRemoteDescription()) != null) {
-        await _handleIceCandidate(candidateMap);
+          peerConnection!.signalingState != RTCSignalingState.RTCSignalingStateClosed) {
+        // We always try to apply remote candidates if we have a PC
+        // If it fails because of state, the buffer logic elsewhere handles it
+        try {
+          await _handleIceCandidate(candidateMap);
+        } catch (e) {
+          print('Buffering remote ICE candidate (immediate apply failed)...');
+          _remoteIceCandidatesBuffer.add(candidateMap);
+        }
       } else {
-        print('Buffering remote ICE candidate...');
+        print('Buffering remote ICE candidate (PC not ready)...');
         _remoteIceCandidatesBuffer.add(candidateMap);
       }
     });
 
     socket.on('room-joined', (data) async {
       final participants = data['participants'] as List;
-      print('Room joined. Found ${participants.length} existing participants.');
+      participantCount = (data['participantCount'] ?? 1) as int;
+      print('Room joined. Found ${participants.length} existing participants (Total: $participantCount).');
+      if (onStateChange != null) onStateChange!();
+      
       if (participants.isNotEmpty) {
-        // Multi-party would need multiple connections, but for 1-on-1 we take the first
         final firstPeer = participants[0];
         _targetSocketId = firstPeer['socketId'];
         print('Target peer established: $_targetSocketId. Initiating offer...');
@@ -112,11 +146,11 @@ class WebRTCService {
     _roomId = roomId;
     final configuration = {
       'iceServers': [
-        {'urls': 'stun:stun.l.google.com:19302'},
-        {'urls': 'stun:stun1.l.google.com:19302'},
-        {'urls': 'stun:stun2.l.google.com:19302'},
-        {'urls': 'stun:stun3.l.google.com:19302'},
-        {'urls': 'stun:stun4.l.google.com:19302'},
+        {'url': 'stun:stun.l.google.com:19302', 'urls': 'stun:stun.l.google.com:19302'},
+        {'url': 'stun:stun1.l.google.com:19302', 'urls': 'stun:stun1.l.google.com:19302'},
+        {'url': 'stun:stun2.l.google.com:19302', 'urls': 'stun:stun2.l.google.com:19302'},
+        {'url': 'stun:stun3.l.google.com:19302', 'urls': 'stun:stun3.l.google.com:19302'},
+        {'url': 'stun:stun4.l.google.com:19302', 'urls': 'stun:stun4.l.google.com:19302'},
       ]
     };
 
@@ -130,6 +164,22 @@ class WebRTCService {
         print('Buffering local ICE candidate (no target yet)...');
         _localIceCandidatesBuffer.add(candidate);
       }
+    };
+
+    peerConnection?.onSignalingState = (RTCSignalingState state) {
+      print('Signaling State Change: $state');
+    };
+
+    peerConnection?.onIceConnectionState = (RTCIceConnectionState state) {
+      print('ICE Connection State Change: $state');
+      iceConnectionState = state;
+      if (onStateChange != null) onStateChange!();
+    };
+
+    peerConnection?.onConnectionState = (RTCPeerConnectionState state) {
+      print('Peer Connection State Change: $state');
+      connectionState = state;
+      if (onStateChange != null) onStateChange!();
     };
 
     peerConnection?.onTrack = (RTCTrackEvent event) {
@@ -152,8 +202,8 @@ class WebRTCService {
   Future<void> _createOffer() async {
     if (peerConnection == null) return;
     RTCSessionDescription offer = await peerConnection!.createOffer({
-      'offerToReceiveVideo': 1,
-      'offerToReceiveAudio': 1,
+      'offerToReceiveVideo': true,
+      'offerToReceiveAudio': true,
     });
     await peerConnection!.setLocalDescription(offer);
     
@@ -176,8 +226,8 @@ class WebRTCService {
     );
 
     RTCSessionDescription answer = await peerConnection!.createAnswer({
-      'offerToReceiveVideo': 1,
-      'offerToReceiveAudio': 1,
+      'offerToReceiveVideo': true,
+      'offerToReceiveAudio': true,
     });
     await peerConnection!.setLocalDescription(answer);
 
@@ -266,6 +316,19 @@ class WebRTCService {
     if (localStream != null) {
       final track = localStream!.getVideoTracks()[0];
       await Helper.switchCamera(track);
+    }
+  }
+
+  void testSignaling() {
+    if (_targetSocketId != null) {
+      print('Sending signaling PING to: $_targetSocketId');
+      signalingTestStatus = 'Testing...';
+      if (onStateChange != null) onStateChange!();
+      socket.emit('ping-signaling', {'to': _targetSocketId});
+    } else {
+      print('Cannot test signaling: No target socket ID');
+      signalingTestStatus = 'No Peer';
+      if (onStateChange != null) onStateChange!();
     }
   }
 
