@@ -89,7 +89,7 @@ npm install
 node index.js
 ```
 
----
+--- 
 
 ## ⚙️ Environment Variables
 
