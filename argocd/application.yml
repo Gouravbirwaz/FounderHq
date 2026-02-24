@@ -14,7 +14,7 @@ spec:
 
   destination:
     server: https://kubernetes.default.svc
-    namespace: founderhq_ns
+    namespace: founderhq-ns
 
   syncPolicy:
     automated:
