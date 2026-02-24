@@ -19,6 +19,19 @@ spec:
           image: gourav1310/founderhq_backend:6f76f0b5aa8952ef34478ea732d8645948621bf4
           ports:
             - containerPort: 8000
+          env:
+            - name: MONGO_USER
+              valueFrom:
+                secretKeyRef:
+                  name: mongodb-secret
+                  key: MONGO_INITDB_ROOT_USERNAME
+            - name: MONGO_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: mongodb-secret
+                  key: MONGO_INITDB_ROOT_PASSWORD
+            - name: MONGO_URL
+              value: "mongodb://$(MONGO_USER):$(MONGO_PASS)@mongodb:27017/?authSource=admin"
           volumeMounts:
             - name: backend-logs
               mountPath: /logs
