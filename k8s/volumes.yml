@@ -1,15 +1,29 @@
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: founderhq-pv
+  name: backend-pv
 spec:
   capacity:
-    storage: 30Gi
+    storage: 5Gi
   accessModes:
     - ReadWriteMany
   storageClassName: ""
   hostPath:
-    path: /mnt/c/Users/Acer/Desktop/test/databinding
+    path: /mnt/c/Users/Acer/Desktop/test/databinding/backend
+
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: huddle-backend-pv
+spec:
+  capacity:
+    storage: 5Gi
+  accessModes:
+    - ReadWriteMany
+  storageClassName: ""
+  hostPath:
+    path: /mnt/c/Users/Acer/Desktop/test/databinding/huddle
 
 ---
 # PVC for Backend Logs

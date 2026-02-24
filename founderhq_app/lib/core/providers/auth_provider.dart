@@ -122,10 +122,19 @@ class AuthNotifier extends Notifier<AuthState> {
 
   Future<bool> loginWithBiometrics() async {
     if (state.isBiometricLocked && state.token != null) {
-      print('Unlocking with stored JWT...');
-      state = state.copyWith(isLoading: true, error: null);
-      await _validateToken(state.token!);
-      return state.isAuthenticated;
+      print('Unlocking with stored JWT immediately...');
+      
+      // Immediately unlock the session for the user
+      state = state.copyWith(
+        isAuthenticated: true,
+        isBiometricLocked: false,
+        isLoading: false,
+        error: null,
+      );
+      
+      // Validate token and fetch user details in the background
+      _validateToken(state.token!);
+      return true;
     }
 
     // Fallback to credential-based biometric login if token is missing
