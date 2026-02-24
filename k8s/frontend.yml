@@ -25,7 +25,7 @@ spec:
             ]
       containers:
         - name: frontend-container
-          image: gourav1310/founderhq_frontend:d39241cf11ccd3b682f52685fc3b68aa7d6cc2c7
+          image: gourav1310/founderhq_frontend:213ba9486cf7a4a79b08fbbba4d3645983728341
           ports:
             - containerPort: 3000
 
