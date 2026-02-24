@@ -11,3 +11,12 @@ nodes:
     extraMounts:
       - hostPath: /mnt/c/Users/Acer/Desktop/test/databinding
         containerPath: /databinding
+
+  - role: worker
+    extraMounts:
+      - hostPath: /mnt/c/Users/Acer/Desktop/test/databinding
+        containerPath: /databinding
+  - role: worker
+    extraMounts:
+      - hostPath: /mnt/c/Users/Acer/Desktop/test/databinding
+        containerPath: /databinding

@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
+from beanie import PydanticObjectId
 
 
 # ─── Auth Schemas ────────────────────────────────────────────────────────────
@@ -77,7 +78,7 @@ class PostCreate(BaseModel):
     file_name: Optional[str] = None
 
 class PostResponse(BaseModel):
-    id: str
+    id: PydanticObjectId
     author_id: str
     author_name: str
     author_role: str
@@ -99,7 +100,7 @@ class CommentCreate(BaseModel):
     content: str
 
 class CommentResponse(BaseModel):
-    id: str
+    id: PydanticObjectId
     post_id: str
     author_id: str
     author_name: str
@@ -113,7 +114,7 @@ class ScheduleCreate(BaseModel):
     time: str
 
 class ScheduleResponse(BaseModel):
-    id: str
+    id: PydanticObjectId
     user_id: str
     title: str
     time: str

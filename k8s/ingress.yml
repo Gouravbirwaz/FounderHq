@@ -2,7 +2,7 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: founderhq-ingress
-  namespace: founderhq_ns
+  namespace: founderhq-ns
   annotations:
     nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
     nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
@@ -17,18 +17,16 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: frontend_service
+                name: frontend-service
                 port:
                   number: 3000
-
           - path: /server
             pathType: Prefix
             backend:
               service:
-                name: bakend_service
+                name: backend-service
                 port:
                   number: 8000
-
           - path: /rooms
             pathType: Prefix
             backend:

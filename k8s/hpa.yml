@@ -1,19 +1,15 @@
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
-
 metadata:
   name: backend-hpa
-  namespace: founderhq_ns
-
+  namespace: founderhq-ns
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: bakend_deployment
-
+    name: backend-deployment
   minReplicas: 2
   maxReplicas: 6
-
   metrics:
     - type: Resource
       resource:
@@ -21,24 +17,20 @@ spec:
         target:
           type: Utilization
           averageUtilization: 60
----
 
+---
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
-
 metadata:
-  name: huddle_backend-hpa
-  namespace: founderhq_ns
-
+  name: huddle-backend-hpa
+  namespace: founderhq-ns
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
     name: huddle-backend-deployment
-
   minReplicas: 2
   maxReplicas: 6
-
   metrics:
     - type: Resource
       resource:

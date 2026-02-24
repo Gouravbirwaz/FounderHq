@@ -1,81 +1,62 @@
-# bakend deployment
-kind: Deployment
+# Backend Deployment
 apiVersion: apps/v1
-
+kind: Deployment
 metadata:
-  name: bakend_deployment
-  namespace: founderhq_ns
+  name: backend-deployment
+  namespace: founderhq-ns
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: founderhq_bakend
+      app: founderhq-backend
   template:
     metadata:
       labels:
-        app: founderhq_bakend
-
+        app: founderhq-backend
     spec:
-      resources:
-        requests:
-          cpu: "200m"
-          memory: "256Mi"
-        limits:
-          cpu: "500m"
-          memory: "512Mi"
-      initContainers:
-        - name: wait_for_backend
-          image: busybox:latest
-          command:
-            [
-              "sh",
-              "-c",
-              "until nc -z mongodb_service 27017;do echo waiting for mongodb ;sleep 2;done;",
-            ]
-
-        - name: create_logs_folder
-          image: busybox:latest
-          command: ["sh", "-c", "mkdir backend_logs"]
-
       containers:
-        - name: bakend_container
-          image: bakend:latest
+        - name: backend-container
+          image: backend:latest
           ports:
             - containerPort: 8000
           volumeMounts:
-            - name: backend_logs
+            - name: backend-logs
               mountPath: /logs
-
-        - name: log_finder
+          resources:
+            requests:
+              cpu: "200m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+      initContainers:
+        - name: wait-for-mongodb
           image: busybox:latest
           command:
             [
               "sh",
               "-c",
-              "while true; do cp /logs/* backend_logs/; sleep 3;done",
+              "until nc -z mongodb 27017; do echo waiting for mongodb; sleep 2; done;",
             ]
-          volumeMounts:
-            - name: backend_logs
-              mountPath: /logs
-
+        - name: create-logs-folder
+          image: busybox:latest
+          command: ["sh", "-c", "mkdir -p /logs/backend_logs"]
       volumes:
-        - name: backend_logs
+        - name: backend-logs
           persistentVolumeClaim:
-            claimName: backend_pvc
+            claimName: backend-pvc
 
 ---
-# bakend Serviv mainfiest
-
-kind: Service
+# Backend Service
 apiVersion: v1
-
+kind: Service
 metadata:
-  name: bakend_service
-  namespace: founderhq_ns
+  name: backend-service
+  namespace: founderhq-ns
 spec:
   type: ClusterIP
   selector:
-    app: founderhq_bakend
+    app: founderhq-backend
   ports:
     - port: 8000
       targetPort: 8000

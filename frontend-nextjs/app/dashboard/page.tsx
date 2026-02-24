@@ -10,7 +10,23 @@ import { useRouter } from "next/navigation";
 import { apiFetch } from "@/lib/api";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 
-const Spark = ({ trend = [0.1, 0.4, 0.2, 0.8, 0.5], color = "#a78bfa" }) => (
+interface ActivityItem {
+    id?: string;
+    text: string;
+    time: string;
+    icon: any;
+    color: string;
+}
+
+interface POCItem {
+    id: string;
+    title: string;
+    stage: string;
+    author_name: string;
+    upvotes: number;
+}
+
+const Spark = ({ trend = [0.1, 0.4, 0.2, 0.8, 0.5], color = "#a78bfa" }: { trend?: number[], color?: string }) => (
     <div style={{ display: "flex", alignItems: "flex-end", gap: 3, height: 20 }}>
         {trend.map((h, i) => (
             <motion.div key={i}
@@ -23,7 +39,7 @@ const Spark = ({ trend = [0.1, 0.4, 0.2, 0.8, 0.5], color = "#a78bfa" }) => (
     </div>
 );
 
-const FadeUp = ({ children, delay = 0, style = {} }) => (
+const FadeUp = ({ children, delay = 0, style = {} }: { children: React.ReactNode, delay?: number, style?: React.CSSProperties }) => (
     <motion.div
         initial={{ opacity: 0, y: 18 }}
         animate={{ opacity: 1, y: 0 }}
@@ -38,8 +54,8 @@ export default function Dashboard() {
     const { user } = useAuth();
     const router = useRouter();
     const [mounted, setMounted] = React.useState(false);
-    const [pocs, setPocs] = React.useState([]);
-    const [activity, setActivity] = React.useState([]);
+    const [pocs, setPocs] = React.useState<POCItem[]>([]);
+    const [activity, setActivity] = React.useState<ActivityItem[]>([]);
     const [stats] = React.useState([
         { label: "Active Nodes", value: "24/24", sub: "All systems nominal", icon: Server, color: "#a78bfa" },
         { label: "Market Sentiment", value: "Bullish", sub: "Confidence index 94.2", icon: TrendingUp, color: "#34d399" },

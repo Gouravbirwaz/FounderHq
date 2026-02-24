@@ -1,5 +1,4 @@
-kind: Namespace
 apiVersion: v1
-
+kind: Namespace
 metadata:
-  name: founderhq_ns
+  name: founderhq-ns
