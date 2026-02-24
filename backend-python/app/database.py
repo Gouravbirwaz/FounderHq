@@ -7,6 +7,8 @@ from app.models.job import Job
 from app.models.market import MarketAlert, NewsArticle
 from app.models.community import CommunityPost, CommunityComment
 from app.models.schedule import Schedule
+from dotenv import load_dotenv
+load_dotenv()
 
 MONGO_URL = os.getenv("MONGO_URL", "mongodb://localhost:27017")
 DB_NAME = os.getenv("DB_NAME", "founderhq")
