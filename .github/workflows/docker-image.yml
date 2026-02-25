@@ -46,8 +46,8 @@ jobs:
       - name: Build and Push Huddle Backend Image
         uses: docker/build-push-action@v5
         with:
-          context: ./huddle-feature
-          file: ./huddle-feature/Dockerfile
+          context: ./huddle-feature/server
+          file: ./huddle-feature/server/Dockerfile
           push: true
           tags: |
             ${{ secrets.DOCKER_USERNAME }}/founderhq_huddle_backend:${{ github.sha }}
