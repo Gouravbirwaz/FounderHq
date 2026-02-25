@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Zap, Mail, Lock, Shield, Star, Users, User, Check, ArrowRight } from "lucide-react";
+import { Zap, Mail, Lock, Shield, Star, Users, User, Check, ArrowRight, Phone } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import { toast } from "@/components/ui/Toast";
@@ -17,6 +17,7 @@ export default function RegisterPage() {
     const [role, setRole] = useState("founder");
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
+    const [phoneNumber, setPhoneNumber] = useState("");
     const [password, setPassword] = useState("");
     const [agreed, setAgreed] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -37,7 +38,7 @@ export default function RegisterPage() {
         try {
             const data = await apiFetch("/auth/register", {
                 method: "POST",
-                body: JSON.stringify({ name, email, password, role })
+                body: JSON.stringify({ name, email, phone_number: phoneNumber, password, role })
             });
 
             login(data.access_token, {
@@ -296,6 +297,30 @@ export default function RegisterPage() {
                                             onFocus={handleFocus}
                                             onBlur={e => handleBlur(e, isLight)}
                                             placeholder="gourav@founderhq.io"
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Phone Number */}
+                                <div className="flex flex-col gap-1.5">
+                                    <label className="text-[11px] font-bold uppercase tracking-[0.15em] text-[var(--text-tertiary)]">
+                                        Phone Number
+                                    </label>
+                                    <div className="relative flex items-center">
+                                        <Phone
+                                            size={15}
+                                            className="absolute left-4 text-[var(--text-tertiary)] pointer-events-none shrink-0"
+                                            style={{ top: "50%", transform: "translateY(-50%)" }}
+                                        />
+                                        <input
+                                            type="tel"
+                                            required
+                                            value={phoneNumber}
+                                            onChange={e => setPhoneNumber(e.target.value)}
+                                            style={inputStyle(isLight)}
+                                            onFocus={handleFocus}
+                                            onBlur={e => handleBlur(e, isLight)}
+                                            placeholder="+91 98765 43210"
                                         />
                                     </div>
                                 </div>
