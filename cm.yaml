@@ -1,0 +1,50 @@
+apiVersion: v1
+data:
+  service.email: |
+    host: smtp.gmail.com
+    port: 587
+    username: gouravpoojary2005@gmail.com
+    password: $email-password
+    from: gouravpoojary2005@gmail.com
+
+  trigger.on-sync-failed: |
+    - description: Application sync failed
+      send:
+        - app-sync-failed
+      when: app.status.operationState.phase in ['Error', 'Failed']
+
+  trigger.on-sync-succeeded: |
+    - description: Application sync succeeded
+      send:
+        - app-sync-succeeded
+      when: app.status.operationState.phase in ['Succeeded']
+
+  template.app-sync-failed: |
+    email:
+      subject: "ArgoCD: {{.app.metadata.name}} sync failed"
+      body: |
+        Application {{.app.metadata.name}} failed to sync.
+        Sync status: {{.app.status.sync.status}}
+        Health status: {{.app.status.health.status}}
+
+  template.app-sync-succeeded: |
+    email:
+      subject: "ArgoCD: {{.app.metadata.name}} sync succeeded"
+      body: |
+        Application {{.app.metadata.name}} synced successfully.
+        Sync status: {{.app.status.sync.status}}
+        Health status: {{.app.status.health.status}}
+kind: ConfigMap
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"v1","data":{"service.email":"host: smtp.gmail.com\nport: 587\nusername: gouravpoojary2005@gmail.com\npassword: $email-password\nfrom: gouravpoojary2005@gmail.com\n","template.app-sync-failed":"email:\n  subject: \"ArgoCD: {{.app.metadata.name}} sync failed\"\n  body: |\n    Application {{.app.metadata.name}} failed to sync.\n    Sync status: {{.app.status.sync.status}}\n    Health status: {{.app.status.health.status}}\n","trigger.on-sync-failed":"- description: Application sync failed\n  send:\n    - app-sync-failed\n  when: app.status.operationState.phase in ['Error', 'Failed']\n"},"kind":"ConfigMap","metadata":{"annotations":{},"creationTimestamp":"2026-02-24T15:24:49Z","labels":{"app.kubernetes.io/component":"notifications-controller","app.kubernetes.io/name":"argocd-notifications-controller","app.kubernetes.io/part-of":"argocd"},"name":"argocd-notifications-cm","namespace":"argocd","resourceVersion":"947","uid":"a892aec7-adb4-420e-af21-3e320c421762"}}
+  creationTimestamp: "2026-02-24T15:24:49Z"
+  labels:
+    app.kubernetes.io/component: notifications-controller
+    app.kubernetes.io/name: argocd-notifications-controller
+    app.kubernetes.io/part-of: argocd
+  name: argocd-notifications-cm
+  namespace: argocd
+  resourceVersion: "40583"
+  uid: a892aec7-adb4-420e-af21-3e320c421762
