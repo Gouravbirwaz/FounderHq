@@ -68,6 +68,6 @@ async def websocket_market(websocket: WebSocket):
     await market_ws_endpoint(websocket)
 
 
-@app.get("/server")
+@app.get("/")
 async def root():
     return {"message": "FounderHQ API is live 🚀", "docs": "/docs"}
