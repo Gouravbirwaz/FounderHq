@@ -7,9 +7,6 @@ const __dirname = dirname(__filename);
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     output: 'standalone',
-    eslint: {
-        ignoreDuringBuilds: true,
-    },
     turbopack: {
         resolveAlias: {
             tailwindcss: resolve(__dirname, 'node_modules/tailwindcss'),
