@@ -25,7 +25,7 @@ spec:
             ]
       containers:
         - name: huddle-backend-container
-          image: gourav1310/founderhq_huddle_backend:0b9ea9d3b41bc9770c0758a1a69e17b8f7c913c5
+          image: gourav1310/founderhq_huddle_backend:deb9e7d51a78da983b3c21efada0c9571961cadc
           ports:
             - containerPort: 5001
           volumeMounts:
