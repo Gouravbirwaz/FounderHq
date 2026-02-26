@@ -93,7 +93,7 @@ export default function DirectMessagePage() {
         const token = localStorage.getItem('auth_token');
         try {
             // Using the global apiUrl if possible, but let's stick to the env var or default
-            const API_BASE = process.env.NEXT_PUBLIC_API_URL ? `${process.env.NEXT_PUBLIC_API_URL}/api/v1` : 'http://127.0.0.1:8000/api/v1';
+            const API_BASE = process.env.NEXT_PUBLIC_API_URL ? `${process.env.NEXT_PUBLIC_API_URL}/api/v1` : 'http://127.0.0.1:8000/server/api/v1';
             const res = await fetch(`${API_BASE}/auth/search?q=${query}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });

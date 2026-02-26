@@ -15,6 +15,11 @@ COPY . .
 # Disable telemetry during build
 ENV NEXT_TELEMETRY_DISABLED=1
 
+# Inject public env variables for the build
+ENV NEXT_PUBLIC_API_URL=/server
+ENV NEXT_PUBLIC_HUDDLE_SERVICE_URL=/rooms
+ENV NEXT_PUBLIC_FCS_API_KEY=fcs_socket_demo
+
 RUN npm run build
 
 # Stage 3: Runner

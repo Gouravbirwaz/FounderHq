@@ -49,13 +49,13 @@ async def validation_exception_handler(request, exc):
     )
 
 # REST Routers
-app.include_router(auth.router, prefix="/api/v1")
-app.include_router(market.router, prefix="/api/v1")
-app.include_router(poc.router, prefix="/api/v1")
-app.include_router(jobs.router, prefix="/api/v1")
-app.include_router(funding.router, prefix="/api/v1")
-app.include_router(community.router, prefix="/api/v1")
-app.include_router(schedule.router, prefix="/api/v1")
+app.include_router(auth.router, prefix="/server/api/v1")
+app.include_router(market.router, prefix="/server/api/v1")
+app.include_router(poc.router, prefix="/server/api/v1")
+app.include_router(jobs.router, prefix="/server/api/v1")
+app.include_router(funding.router, prefix="/server/api/v1")
+app.include_router(community.router, prefix="/server/api/v1")
+app.include_router(schedule.router, prefix="/server/api/v1")
 
 # Static files for uploads
 os.makedirs("uploads", exist_ok=True)
