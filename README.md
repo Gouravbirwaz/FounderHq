@@ -92,7 +92,7 @@ node index.js
 --- 
 
 ## ⚙️ Environment Variables
-
+ 
 Each component requires specific environment variables. Reference the `.env.example` files (if available) or use the following defaults:
 
 ### Backend (.env)
