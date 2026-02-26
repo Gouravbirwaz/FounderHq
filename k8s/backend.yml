@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: backend-container
-          image: gourav1310/founderhq_backend:deb9e7d51a78da983b3c21efada0c9571961cadc
+          image: gourav1310/founderhq_backend:fffdf429138694bafce98c2883a413e225e6730d
           ports:
             - containerPort: 8000
           env:
